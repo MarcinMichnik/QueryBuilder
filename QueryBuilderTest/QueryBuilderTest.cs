@@ -15,9 +15,9 @@ namespace QueryBuilderTest
         }
 
         [Test]
-        public void TestQueryBuilderInsert()
+        public void TestInsertWithSequencedMasterPrimaryKey()
         {
-            Statement query = GetExamplaryInsert();
+            Statement query = GetInsertWithMasterPrimaryKey();
 
             string actual = query.ToString();
 
@@ -43,7 +43,7 @@ namespace QueryBuilderTest
         }
 
         [Test]
-        public void TestQueryBuilderInsertWithoutMasterPrimaryKey()
+        public void TestInsertWithoutMasterPrimaryKey()
         {
             Statement query = GetInsertWithoutMasterPrimaryKey();
 
@@ -70,7 +70,7 @@ namespace QueryBuilderTest
         }
 
         [Test]
-        public void TestQueryBuilderUpdateWithOnePrimaryKey()
+        public void TestUpdateWithOnePrimaryKey()
         {
             Update query = GetUpdateWithOnePrimaryKey();
 
@@ -90,7 +90,7 @@ namespace QueryBuilderTest
         }
 
         [Test]
-        public void TestQueryBuilderUpdateWithManyPrimaryKeys()
+        public void TestUpdateWithManyPrimaryKeys()
         {
             Update query = GetUpdateWithManyPrimaryKeys();
 
@@ -110,7 +110,7 @@ namespace QueryBuilderTest
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
 
-        private Insert GetExamplaryInsert()
+        private Insert GetInsertWithMasterPrimaryKey()
         {
             Insert query = new Insert(TableName);
 

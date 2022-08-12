@@ -18,6 +18,9 @@ namespace QueryBuilder
 
         override public string ToString()
         {
+            if (PrimaryKeyLookups.Count == 0)
+                throw new Exception("Primary key lookup list (where clauses) must not be empty!");
+
             string primaryKeyLookups = GetPrimaryKeyLookups();
             string columns = GetColumns();
 
