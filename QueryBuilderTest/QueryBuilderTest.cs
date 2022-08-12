@@ -17,7 +17,7 @@ namespace QueryBuilderTest
         [Test]
         public void TestInsertWithSequencedMasterPrimaryKey()
         {
-            Statement query = GetInsertWithMasterPrimaryKey();
+            Statement query = GetInsertWithMasterPrimaryKey(1);
 
             string actual = query.ToString();
 
@@ -110,13 +110,53 @@ namespace QueryBuilderTest
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
 
-        private Insert GetInsertWithMasterPrimaryKey()
+        [Test]
+        public void TestTransactionWithTwoInserts()
+        {
+            Transaction query = GetTransactionWithTwoInserts();
+
+            string actual = query.ToString();
+
+
+            string expected = @$"BEGIN
+                                    INSERT INTO {TableName} (
+                                        MASTER_ID, ID, NAME, SAVINGS, MODIFIED_AT, MODIFIED_BY
+                                    ) 
+                                    VALUES (
+                                        SEQ.NEXT_VAL,
+                                        1,
+                                        'HANNAH',
+                                        12.1,
+                                        TO_DATE('2021-01-01T00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
+                                        'NOT LOGGED IN'
+                                    );
+
+                                    INSERT INTO {TableName} (
+                                        MASTER_ID, ID, NAME, SAVINGS, MODIFIED_AT, MODIFIED_BY
+                                    ) 
+                                    VALUES (
+                                        SEQ.NEXT_VAL,
+                                        2,
+                                        'HANNAH',
+                                        12.1,
+                                        TO_DATE('2021-01-01T00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
+                                        'NOT LOGGED IN'
+                                    );
+                                END;";
+
+            string actualEscaped = Regex.Replace(actual, @"\s", "");
+            string expectedEscaped = Regex.Replace(expected, @"\s", "");
+
+            Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
+        }
+
+        private Insert GetInsertWithMasterPrimaryKey(int id)
         {
             Insert query = new Insert(TableName);
 
             query.MasterPrimary = new KeyValuePair<string, string>("MASTER_ID", "SEQ.NEXT_VAL");
 
-            query.AddColumn("ID", 1);
+            query.AddColumn("ID", id);
             query.AddColumn("NAME", "HANNAH");
             query.AddColumn("SAVINGS", 12.1);
 
@@ -182,6 +222,19 @@ namespace QueryBuilderTest
             query.AddColumn("MODIFIED_AT", modifiedAt);
 
             query.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+
+            return query;
+        }
+
+        private Transaction GetTransactionWithTwoInserts()
+        {
+            Transaction query = new Transaction();
+
+            Insert insert1 = GetInsertWithMasterPrimaryKey(1);
+            Insert insert2 = GetInsertWithMasterPrimaryKey(2);
+
+            query.Statements.Add(insert1);
+            query.Statements.Add(insert2);
 
             return query;
         }

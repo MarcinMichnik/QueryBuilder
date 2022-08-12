@@ -41,7 +41,7 @@ namespace QueryBuilder
 
         string IStatement.ToString()
         {
-            throw new Exception("NOT EXPECTED"); ;
+            throw new Exception("NOT EXPECTED");
         }
     }
 }
