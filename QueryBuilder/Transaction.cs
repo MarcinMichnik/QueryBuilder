@@ -1,7 +1,6 @@
 ﻿using System.Text;
-using QueryBuilder;
 
-namespace QueryBuilderTest
+namespace QueryBuilder
 {
     public class Transaction
     {
@@ -14,18 +13,19 @@ namespace QueryBuilderTest
 
         override public string ToString()
         {
+            return @$"BEGIN
+                        {GetStatementLiterals()}
+                      END;";
+        }
+
+        private string GetStatementLiterals()
+        {
             StringBuilder transaction = new StringBuilder();
-
-            transaction.AppendLine("BEGIN");
-
-            foreach(IStatement statement in Statements) 
+            foreach (IStatement statement in Statements)
             {
                 string literal = GetStatementLiteral(statement);
                 transaction.AppendLine(literal);
             }
-
-            transaction.AppendLine("END;");
-
             return transaction.ToString();
         }
 
@@ -36,8 +36,7 @@ namespace QueryBuilderTest
                 Insert insert = (Insert)statement;
                 return insert.ToString();
             }
-            else
-            {
+            else {
                 Update update = (Update)statement;
                 return update.ToString();
             }

@@ -17,7 +17,7 @@ namespace QueryBuilderTest
         [Test]
         public void TestInsertWithSequencedMasterPrimaryKey()
         {
-            Statement query = GetInsertWithMasterPrimaryKey(1);
+            Insert query = GetInsertWithMasterPrimaryKey(1);
 
             string actual = query.ToString();
 
