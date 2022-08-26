@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Newtonsoft.Json.Linq;
 
-namespace QueryBuilder
+namespace QueryBuilder.Statements
 {
     public class Insert : Statement
     {

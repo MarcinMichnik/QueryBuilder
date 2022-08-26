@@ -8,37 +8,32 @@ using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using QueryBuilder;
 using QueryBuilder.BulkOperations;
+using QueryBuilder.DataTypes;
+using QueryBuilder.Statements;
 
 namespace QueryBuilderTest
 {
     internal class BulkMergeTest
     {
-
-        public SqlFunction SqlFunctionEntity { get; set; } = new("CURRENT_TIMESTAMP()");
+        private SqlFunction CurrentTimestampCall { get; set; } = new("CURRENT_TIMESTAMP()");
+        private string TableName { get; } = "EXAMPLE_TABLE_NAME";
+        private List<string> PrimaryKeyIdentifiers { get; set; } = new() { "ID" };
+        public int MaxOperationSize { get; set; } = 1000;
 
         [Test]
-        public void TestSimpleMerge()
+        public void TestSingleMerge()
         {
             JArray incoming = GetArrayOfEntities(1);
             JArray existing = GetArrayOfEntities(2);
 
-            string tableName = "APP";
-            List<string> primaryKeyIdentifiers = new() { "ID" };
+            BulkMerge actual = new(
+                incoming, existing, TableName, PrimaryKeyIdentifiers);
 
-            BulkMerge dm = new(
-                incoming, existing, tableName, primaryKeyIdentifiers);
-            Transaction actual = dm.Transactions.First();
+            BulkMerge expected = PopulateBulkMergeWithTransaction(
+                new BulkMerge(), new List<int>() { 1 });
 
-            Transaction expected = new();
-            Insert expectedInput = new(tableName);
-            expectedInput.AddColumn("ID", 1);
-            expectedInput.AddColumn("NAME", "HANNAH");
-            expectedInput.AddColumn("MODIFIED_AT", SqlFunctionEntity);
-            expectedInput.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
-            expected.Statements.Add(expectedInput);
-
-            string actualEscaped = Regex.Replace(actual.ToString(), @"\s", "");
-            string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
+            string actualEscaped = RemoveWhitespace(actual.ToString());
+            string expectedEscaped = RemoveWhitespace(expected.ToString());
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -46,10 +41,39 @@ namespace QueryBuilderTest
         [Test]
         public void TestBulkMerge()
         {
-            int operationSize = 1000;
+            JArray incoming = GetBigArrayOfEntities(1, MaxOperationSize);
+            JArray existing = GetBigArrayOfEntities(2, MaxOperationSize - 1);
 
+            BulkMerge actual = new(
+                incoming, existing, TableName, PrimaryKeyIdentifiers);
+
+            BulkMerge expected = PopulateBulkMergeWithTransaction(
+                new BulkMerge(), new List<int>() { 1, MaxOperationSize });
+
+            string actualEscaped = RemoveWhitespace(actual.ToString());
+            string expectedEscaped = RemoveWhitespace(expected.ToString());
+
+            Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
+        }
+
+        [Test]
+        public void TestBulkMergeWithBigTransactions()
+        {
+            JArray incoming = GetBigArrayOfEntities(1, MaxOperationSize);
+
+            BulkMerge actualEntity = new(
+                incoming, new JArray(), TableName, PrimaryKeyIdentifiers);
+            int actual = actualEntity.Transactions.Count;
+
+            int expected = (int)Math.Ceiling(MaxOperationSize / (double)actualEntity.MaxTransactionSize);
+
+            Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        private static JArray GetBigArrayOfEntities(int min, int max)
+        {
             JArray incoming = new();
-            for (int i = 1; i <= operationSize; i++)
+            for (int i = min; i <= max; i++)
             {
                 JObject o = new()
                 {
@@ -59,46 +83,28 @@ namespace QueryBuilderTest
                 incoming.Add(o);
             }
 
-            JArray existing = new();
-            for (int i = 2; i < operationSize; i++)
-            {
-                JObject o = new()
-                {
-                    ["ID"] = i,
-                    ["NAME"] = "HANNAH"
-                };
-                existing.Add(o);
-            }
-
-            string tableName = "APP";
-            List<string> primaryKeyIdentifiers = new() { "ID" };
-
-            BulkMerge dm = new(
-                incoming, existing, tableName, primaryKeyIdentifiers);
-            Transaction actual = dm.Transactions.First();
-
-            Transaction expected = new();
-            Insert expectedInputOne = new(tableName);
-            expectedInputOne.AddColumn("ID", 1);
-            expectedInputOne.AddColumn("NAME", "HANNAH");
-            expectedInputOne.AddColumn("MODIFIED_AT", SqlFunctionEntity);
-            expectedInputOne.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
-            expected.Statements.Add(expectedInputOne);
-
-            Insert expectedInputTwo = new(tableName);
-            expectedInputTwo.AddColumn("ID", operationSize);
-            expectedInputTwo.AddColumn("NAME", "HANNAH");
-            expectedInputTwo.AddColumn("MODIFIED_AT", SqlFunctionEntity);
-            expectedInputTwo.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
-            expected.Statements.Add(expectedInputTwo);
-
-            string actualEscaped = Regex.Replace(actual.ToString(), @"\s", "");
-            string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
-
-            Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
+            return incoming;
         }
 
-        private JArray GetArrayOfEntities(int id)
+        private BulkMerge PopulateBulkMergeWithTransaction(
+            BulkMerge bulkMergeEntity, List<int> id)
+        {
+            Transaction transaction = new();
+            foreach (int i in id)
+            {
+                Insert example = new(TableName);
+                example.AddColumn("ID", i);
+                example.AddColumn("NAME", "HANNAH");
+                example.AddColumn("MODIFIED_AT", CurrentTimestampCall);
+                example.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+                transaction.Statements.Add(example);
+            }
+
+            bulkMergeEntity.Transactions.Add(transaction);
+            return bulkMergeEntity;
+        }
+
+        private static JArray GetArrayOfEntities(int id)
         {
             JArray array = new();
             JObject element = new()
@@ -108,6 +114,11 @@ namespace QueryBuilderTest
             };
             array.Add(element);
             return array;
+        }
+
+        private static string RemoveWhitespace(string str)
+        { 
+            return Regex.Replace(str, @"\s", "");
         }
     }
 }

@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using QueryBuilder;
+using QueryBuilder.DataTypes;
+using QueryBuilder.Statements;
 
 namespace QueryBuilderTest
 {

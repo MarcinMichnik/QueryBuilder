@@ -3,7 +3,7 @@ using Microsoft.VisualBasic;
 using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace QueryBuilder
+namespace QueryBuilder.Statements
 {
     public class Update : Statement
     {
@@ -48,7 +48,7 @@ namespace QueryBuilder
         private string GetPrimaryKeyLookups()
         {
             StringBuilder primaryKeyLookups = new StringBuilder();
-            foreach(KeyValuePair<string, JToken> primaryKeyLookup in PrimaryKeyLookups) 
+            foreach (KeyValuePair<string, JToken> primaryKeyLookup in PrimaryKeyLookups)
             {
                 string convertedValue = ConvertJTokenToString(primaryKeyLookup.Value);
                 string primaryKeyLookupLiteral = $"{primaryKeyLookup.Key} = {convertedValue} AND ";

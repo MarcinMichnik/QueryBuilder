@@ -5,24 +5,22 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using Newtonsoft.Json.Linq;
+using QueryBuilder.DataTypes;
+using QueryBuilder.Statements;
 
 namespace QueryBuilder.BulkOperations
 {
     public class BulkMerge
     {
-        public JArray IncomingEntities { get; }
-
-        public JArray ExistingTableState { get; }
-
+        private JArray IncomingEntities { get; } = new();
+        private JArray ExistingTableState { get; } = new();
         public List<Transaction> Transactions { get; set; } = new();
-
-        private ushort MaxTransactionSize { get; } = 512;
-
-        public string TableName { get; set; }
-
-        public List<string> PrimaryKeyIdentifiers { get; set; }
-
+        public ushort MaxTransactionSize { get; } = 512;
+        private string TableName { get; set; } = "";
+        private List<string> PrimaryKeyIdentifiers { get; set; } = new();
         private SqlFunction CurrentTimestampCall { get; set; } = new SqlFunction("CURRENT_TIMESTAMP()");
+
+        public BulkMerge() { }
 
         public BulkMerge(
             JArray incomingEntities,
@@ -35,18 +33,26 @@ namespace QueryBuilder.BulkOperations
             TableName = tableName;
             PrimaryKeyIdentifiers = primaryKeyIdentifiers;
 
-            Transaction transaction = InitializeTranzaction();
-            Transactions.Add(transaction);
+            InitializeTransactions();
         }
 
-        private Transaction InitializeTranzaction()
+        public override string ToString()
         {
-            Transactions = new List<Transaction>();
+            StringBuilder text = new();
+            foreach (Transaction t in Transactions)
+            {
+                text.AppendLine(t.ToString());
+            }
+            return text.ToString();
+        }
 
+        private void InitializeTransactions()
+        {
             Transaction transaction = new();
 
-            foreach (JToken entity in IncomingEntities)
+            for (int i = 0; i < IncomingEntities.Count; i++)
             {
+                JToken entity = IncomingEntities[i];
                 IEnumerable<JToken> matches = FindMatches(entity);
                 IStatement? statement = null;
 
@@ -61,19 +67,15 @@ namespace QueryBuilder.BulkOperations
 
                 if (statement != null)
                     transaction.Statements.Add(statement);
+
+                if (transaction.Statements.Count % MaxTransactionSize == 0)
+                {
+                    Transactions.Add(transaction);
+                    transaction = new Transaction();
+                }
+                if (i == IncomingEntities.Count - 1)
+                    Transactions.Add(transaction);
             }
-
-            return transaction;
-        }
-
-        override public string ToString()
-        {
-            return Transactions.First().ToString();
-        }
-
-        public bool Equals(BulkMerge other)
-        { 
-            return other.ToString().Equals(ToString());
         }
 
         private IEnumerable<JToken> FindMatches(JToken original)

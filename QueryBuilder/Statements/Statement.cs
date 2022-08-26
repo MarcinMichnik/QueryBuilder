@@ -1,7 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
+using QueryBuilder.DataTypes;
 
-namespace QueryBuilder
+namespace QueryBuilder.Statements
 {
     public abstract class Statement : IStatement
     {
