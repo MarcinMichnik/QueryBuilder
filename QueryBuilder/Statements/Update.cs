@@ -7,18 +7,17 @@ namespace QueryBuilder.Statements
 {
     public class Update : Statement, IStatement
     {
-        // list of pairs where key is primaryKeyName, value is filter for updting
-        public List<KeyValuePair<string, JToken>> PrimaryKeyLookups { get; set; }
+        // list of pairs where key is primaryKeyName, value is filter for updating
+        public Dictionary<string, JToken> WhereClauses { get; set; } = new();
 
-        public Update(string tableName) : base(tableName)
+        public Update(string tableName)
         {
             TableName = tableName;
-            PrimaryKeyLookups = new List<KeyValuePair<string, JToken>>();
         }
 
         override public string ToString()
         {
-            if (PrimaryKeyLookups.Count == 0)
+            if (WhereClauses.Count == 0)
                 throw new Exception("Primary key lookup list (where clauses) must not be empty!");
 
             string primaryKeyLookups = GetPrimaryKeyLookups();
@@ -48,7 +47,7 @@ namespace QueryBuilder.Statements
         private string GetPrimaryKeyLookups()
         {
             StringBuilder primaryKeyLookups = new StringBuilder();
-            foreach (KeyValuePair<string, JToken> primaryKeyLookup in PrimaryKeyLookups)
+            foreach (KeyValuePair<string, JToken> primaryKeyLookup in WhereClauses)
             {
                 string convertedValue = ConvertJTokenToString(primaryKeyLookup.Value);
                 string primaryKeyLookupLiteral = $"{primaryKeyLookup.Key} = {convertedValue} AND ";

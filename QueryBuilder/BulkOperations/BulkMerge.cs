@@ -129,8 +129,7 @@ namespace QueryBuilder.BulkOperations
 
             foreach (string identifier in PrimaryKeyIdentifiers)
             {
-                KeyValuePair<string, JToken> pair = new(identifier, token[identifier]);
-                update.PrimaryKeyLookups.Add(pair);
+                update.WhereClauses.Add(identifier, token[identifier]);
             }
 
             return update;

@@ -14,7 +14,7 @@ namespace QueryBuilderTest
         [SetUp]
         public void Setup()
         {
-            TableName = "\"APP\".\"EXAMPLARY_TABLE_NAME\"";
+            TableName = "\"APP\".\"EXAMPLE_TABLE_NAME\"";
         }
 
         [Test]
@@ -40,7 +40,7 @@ namespace QueryBuilderTest
         [Test]
         public void TestInsertWithoutMasterPrimaryKey()
         {
-            Statement query = GetInsertWithoutMasterPrimaryKey();
+            Insert query = GetInsertWithoutMasterPrimaryKey();
 
             string actual = query.ToString();
 
@@ -69,7 +69,7 @@ namespace QueryBuilderTest
             expected.AddColumn("SAVINGS", 12.1);
             expected.AddColumn("MODIFIED_AT", SqlFunctionEntity);
             expected.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
-            expected.PrimaryKeyLookups.Add(new KeyValuePair<string, JToken>("ID", 1));
+            expected.WhereClauses.Add("ID", 1);
 
             string actualEscaped = Regex.Replace(actual, @"\s", "");
             string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
@@ -88,8 +88,8 @@ namespace QueryBuilderTest
             expected.AddColumn("SAVINGS", 12.1);
             expected.AddColumn("MODIFIED_AT", SqlFunctionEntity);
             expected.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
-            expected.PrimaryKeyLookups.Add(new KeyValuePair<string, JToken>("ID", 1));
-            expected.PrimaryKeyLookups.Add(new KeyValuePair<string, JToken>("EXTERNAL_ID", 301));
+            expected.WhereClauses.Add("ID", 1);
+            expected.WhereClauses.Add("EXTERNAL_ID", 301);
 
             string actualEscaped = Regex.Replace(actual, @"\s", "");
             string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
@@ -144,7 +144,7 @@ namespace QueryBuilderTest
 
         private Insert GetInsertWithoutMasterPrimaryKey()
         {
-            Insert query = new Insert(TableName);
+            Insert query = new(TableName);
 
             query.AddColumn("ID", 1);
             query.AddColumn("NAME", "HANNAH");
@@ -157,11 +157,9 @@ namespace QueryBuilderTest
 
         private Update GetUpdateWithOnePrimaryKey()
         {
-            Update query = new Update(TableName);
+            Update query = new(TableName);
 
-            KeyValuePair<string, JToken> primaryKeyLookup
-                = new KeyValuePair<string, JToken>("ID", 1);
-            query.PrimaryKeyLookups.Add(primaryKeyLookup);
+            query.WhereClauses.Add("ID", 1);
 
             query.AddColumn("NAME", "HANNAH");
             query.AddColumn("SAVINGS", 12.1);
@@ -173,15 +171,10 @@ namespace QueryBuilderTest
 
         private Update GetUpdateWithManyPrimaryKeys()
         {
-            Update query = new Update(TableName);
+            Update query = new(TableName);
 
-            KeyValuePair<string, JToken> primaryKeyLookup 
-                = new KeyValuePair<string, JToken>("ID", 1);
-            query.PrimaryKeyLookups.Add(primaryKeyLookup);
-
-            KeyValuePair<string, JToken> primaryKeyLookup2 
-                = new KeyValuePair<string, JToken>("EXTERNAL_ID", 301);
-            query.PrimaryKeyLookups.Add(primaryKeyLookup2);
+            query.WhereClauses.Add("ID", 1);
+            query.WhereClauses.Add("EXTERNAL_ID", 301);
 
             query.AddColumn("NAME", "HANNAH");
             query.AddColumn("SAVINGS", 12.1);
