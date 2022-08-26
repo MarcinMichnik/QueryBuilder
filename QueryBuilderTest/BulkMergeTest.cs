@@ -32,8 +32,8 @@ namespace QueryBuilderTest
             BulkMerge expected = PopulateBulkMergeWithTransaction(
                 new BulkMerge(), new List<int>() { 1 });
 
-            string actualEscaped = RemoveWhitespace(actual.ToString());
-            string expectedEscaped = RemoveWhitespace(expected.ToString());
+            string actualEscaped = TestHelpers.RemoveWhitespace(actual.ToString());
+            string expectedEscaped = TestHelpers.RemoveWhitespace(expected.ToString());
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -50,8 +50,8 @@ namespace QueryBuilderTest
             BulkMerge expected = PopulateBulkMergeWithTransaction(
                 new BulkMerge(), new List<int>() { 1, MaxOperationSize });
 
-            string actualEscaped = RemoveWhitespace(actual.ToString());
-            string expectedEscaped = RemoveWhitespace(expected.ToString());
+            string actualEscaped = TestHelpers.RemoveWhitespace(actual.ToString());
+            string expectedEscaped = TestHelpers.RemoveWhitespace(expected.ToString());
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -114,11 +114,6 @@ namespace QueryBuilderTest
             };
             array.Add(element);
             return array;
-        }
-
-        private static string RemoveWhitespace(string str)
-        { 
-            return Regex.Replace(str, @"\s", "");
         }
     }
 }

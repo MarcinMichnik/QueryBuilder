@@ -6,13 +6,6 @@ namespace QueryBuilder.Statements
 {
     public abstract class Statement
     {
-        // used to distinguish sql function calls from regular string values
-        // since both are stored as a JTokenType.String
-        // sql function calls will start with this prefix
-        // IMPORTANT: this implementation presumes
-        // that "\f\n" would never be used as first characters in a function literal name
-        private readonly string functionLiteralPrefix = "\f\n";
-
         public Dictionary<string, JToken> Columns { get; set; } = new();
         public string TableName { get; set; } = "EXAMPLE_TABLE_NAME";
 
@@ -23,19 +16,26 @@ namespace QueryBuilder.Statements
 
         public void AddColumn(string name, SqlFunction function)
         {
-            string functionLiteral = $"{functionLiteralPrefix}{function.Literal}";
+            // Save function as JTokenType.String with a prefix
+            string functionLiteral = function.GetPrefixedLiteral();
             Columns.Add(name, functionLiteral);
         }
 
-        protected string ConvertJTokenToString(JToken token)
+        protected static string ConvertJTokenToString(JToken token)
         {
             switch (token.Type)
             {
                 case JTokenType.String:
                     string strToken = token.ToString();
-                    if (strToken.StartsWith(functionLiteralPrefix))
-                        return strToken[functionLiteralPrefix.Length..];
+
+                    // If JTopkeType.String has a function call prefix, it needs to be read differently
+                    if (strToken.StartsWith(SqlFunction.FunctionLiteralPrefix))
+                    {
+                        return strToken[SqlFunction.FunctionLiteralPrefix.Length..];
+                    }
+
                     return $"'{strToken}'";
+
                 case JTokenType.Integer:
                     return token.ToString();
                 case JTokenType.Float:
@@ -47,7 +47,7 @@ namespace QueryBuilder.Statements
                     string utcDateTimeString = utcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss");
                     return $"TO_DATE('{utcDateTimeString}', 'YYYY-MM-DD\"T\"HH24:MI:SS')";
                 default:
-                    throw new Exception("NOT EXPECTED");
+                    throw new Exception($"NOT EXPECTED TYPE: {token.Type}");
             }
         }
     }

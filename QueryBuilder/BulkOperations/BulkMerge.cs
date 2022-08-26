@@ -36,17 +36,6 @@ namespace QueryBuilder.BulkOperations
             InitializeTransactions();
         }
 
-        public override string ToString()
-        {
-            StringBuilder text = new();
-            foreach (Transaction t in Transactions)
-            {
-                string transactionStr = t.ToString();
-                text.AppendLine(transactionStr);
-            }
-            return text.ToString();
-        }
-
         private void InitializeTransactions()
         {
             Transaction transaction = new();
@@ -70,22 +59,6 @@ namespace QueryBuilder.BulkOperations
             }
         }
 
-        private IStatement? TryGetStatement(JToken entity, IEnumerable<JToken> matches)
-        {
-            IStatement? statement = null;
-
-            if (matches.Any())
-            {
-                JToken match = matches.First();
-                if (!JToken.DeepEquals(entity, match))
-                    statement = GetUpdateFrom(entity);
-            }
-            else
-                statement = GetInsertFrom(entity);
-
-            return statement;
-        }
-
         private IEnumerable<JToken> FindMatches(JToken original)
         {
             IEnumerable<JToken> matches = ExistingTableState;
@@ -102,6 +75,21 @@ namespace QueryBuilder.BulkOperations
             return matches;
         }
 
+        private IStatement? TryGetStatement(JToken entity, IEnumerable<JToken> matches)
+        {
+            IStatement? statement = null;
+
+            if (matches.Any())
+            {
+                JToken match = matches.First();
+                if (!JToken.DeepEquals(entity, match))
+                    statement = GetUpdateFrom(entity);
+            }
+            else
+                statement = GetInsertFrom(entity);
+
+            return statement;
+        }
         private Insert GetInsertFrom(JToken token)
         {
             Insert insert = new(TableName);
@@ -129,10 +117,21 @@ namespace QueryBuilder.BulkOperations
 
             foreach (string identifier in PrimaryKeyIdentifiers)
             {
-                update.WhereClauses.Add(identifier, token[identifier]);
+                update.Where(identifier, "=", token[identifier]);
             }
 
             return update;
+        }
+
+        public override string ToString()
+        {
+            StringBuilder text = new();
+            foreach (Transaction t in Transactions)
+            {
+                string transactionStr = t.ToString();
+                text.AppendLine(transactionStr);
+            }
+            return text.ToString();
         }
     }
 }
