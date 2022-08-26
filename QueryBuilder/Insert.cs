@@ -5,9 +5,6 @@ namespace QueryBuilder
 {
     public class Insert : Statement
     {
-        // key is columnName, value is sequencer method literal
-        public KeyValuePair<string, string>? MasterPrimary { get; set; }
-
         public Insert(string tableName) : base(tableName)
         {
             TableName = tableName;
@@ -29,10 +26,6 @@ namespace QueryBuilder
         {
             StringBuilder columns = new StringBuilder();
 
-            if (MasterPrimary != null)
-                columns.AppendLine($"{MasterPrimary?.Key},");
-
-            
             foreach (KeyValuePair<string, JToken> column in Columns)
             {
                 string columnLiteral = $"{column.Key},";
@@ -49,9 +42,6 @@ namespace QueryBuilder
         private string GetValues()
         {
             StringBuilder columns = new StringBuilder();
-
-            if (MasterPrimary != null)
-                columns.AppendLine($"{MasterPrimary?.Value},");
 
             foreach (KeyValuePair<string, JToken> column in Columns)
             {

@@ -6,6 +6,7 @@ namespace QueryBuilderTest
 {
     public class QueryBuilderTest
     {
+        public SqlFunction SqlFunctionEntity { get; set; } = new("CURRENT_TIMESTAMP()");
         public string TableName { get; set; }
 
         [SetUp]
@@ -18,26 +19,18 @@ namespace QueryBuilderTest
         public void TestInsertWithSequencedMasterPrimaryKey()
         {
             Insert query = GetInsertWithMasterPrimaryKey(1);
-
             string actual = query.ToString();
 
-            string expected = @$"INSERT INTO {TableName} (
-                                    MASTER_ID, ID, NAME, SAVINGS, MODIFIED_AT, MODIFIED_BY
-                                ) 
-                                VALUES (
-                                    SEQ.NEXT_VAL,
-                                    1,
-                                    'HANNAH',
-                                    12.1,
-                                    TO_DATE('2021-01-01T00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
-                                    'NOT LOGGED IN'
-                                );";
+            Insert expected = new(TableName);
+            expected.AddColumn("MASTER_ID", new SqlFunction("SEQ.NEXT_VAL"));
+            expected.AddColumn("ID", 1);
+            expected.AddColumn("NAME", "HANNAH");
+            expected.AddColumn("SAVINGS", 12.1);
+            expected.AddColumn("MODIFIED_AT", SqlFunctionEntity);
+            expected.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
 
             string actualEscaped = Regex.Replace(actual, @"\s", "");
-            string expectedEscaped = Regex.Replace(expected, @"\s", "");
-
-            Console.WriteLine(actualEscaped);
-            Console.WriteLine(expectedEscaped);
+            string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -49,22 +42,15 @@ namespace QueryBuilderTest
 
             string actual = query.ToString();
 
-            string expected = @$"INSERT INTO {TableName} (
-                                    ID, NAME, SAVINGS, MODIFIED_AT, MODIFIED_BY
-                                ) 
-                                VALUES (
-                                    1,
-                                    'HANNAH',
-                                    12.1,
-                                    TO_DATE('2021-01-01T00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
-                                    'NOT LOGGED IN'
-                                );";
+            Insert expected = new(TableName);
+            expected.AddColumn("ID", 1);
+            expected.AddColumn("NAME", "HANNAH");
+            expected.AddColumn("SAVINGS", 12.1);
+            expected.AddColumn("MODIFIED_AT", SqlFunctionEntity);
+            expected.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
 
             string actualEscaped = Regex.Replace(actual, @"\s", "");
-            string expectedEscaped = Regex.Replace(expected, @"\s", "");
-
-            Console.WriteLine(actualEscaped);
-            Console.WriteLine(expectedEscaped);
+            string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -76,15 +62,15 @@ namespace QueryBuilderTest
 
             string actual = query.ToString();
 
-            string expected = @$"UPDATE {TableName} SET
-                                    NAME = 'HANNAH',
-                                    SAVINGS = 12.1,
-                                    MODIFIED_AT = TO_DATE('2021-01-01T00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
-                                    MODIFIED_BY = 'NOT LOGGED IN'
-                                WHERE ID = 1;";
+            Update expected = new(TableName);
+            expected.AddColumn("NAME", "HANNAH");
+            expected.AddColumn("SAVINGS", 12.1);
+            expected.AddColumn("MODIFIED_AT", SqlFunctionEntity);
+            expected.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+            expected.PrimaryKeyLookups.Add(new KeyValuePair<string, JToken>("ID", 1));
 
             string actualEscaped = Regex.Replace(actual, @"\s", "");
-            string expectedEscaped = Regex.Replace(expected, @"\s", "");
+            string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -93,19 +79,18 @@ namespace QueryBuilderTest
         public void TestUpdateWithManyPrimaryKeys()
         {
             Update query = GetUpdateWithManyPrimaryKeys();
-
             string actual = query.ToString();
 
-
-            string expected = @$"UPDATE {TableName} SET
-                                    NAME = 'HANNAH',
-                                    SAVINGS = 12.1,
-                                    MODIFIED_AT = TO_DATE('2021-01-01T00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
-                                    MODIFIED_BY = 'NOT LOGGED IN'
-                                WHERE ID = 1 AND EXTERNAL_ID = 301;";
+            Update expected = new(TableName);
+            expected.AddColumn("NAME", "HANNAH");
+            expected.AddColumn("SAVINGS", 12.1);
+            expected.AddColumn("MODIFIED_AT", SqlFunctionEntity);
+            expected.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+            expected.PrimaryKeyLookups.Add(new KeyValuePair<string, JToken>("ID", 1));
+            expected.PrimaryKeyLookups.Add(new KeyValuePair<string, JToken>("EXTERNAL_ID", 301));
 
             string actualEscaped = Regex.Replace(actual, @"\s", "");
-            string expectedEscaped = Regex.Replace(expected, @"\s", "");
+            string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -114,55 +99,42 @@ namespace QueryBuilderTest
         public void TestTransactionWithTwoInserts()
         {
             Transaction query = GetTransactionWithTwoInserts();
-
             string actual = query.ToString();
 
+            Transaction expected = new();
+            Insert expectedOne = new(TableName);
+            expectedOne.AddColumn("MASTER_ID", new SqlFunction("SEQ.NEXT_VAL"));
+            expectedOne.AddColumn("ID", 1);
+            expectedOne.AddColumn("NAME", "HANNAH");
+            expectedOne.AddColumn("SAVINGS", 12.1);
+            expectedOne.AddColumn("MODIFIED_AT", SqlFunctionEntity);
+            expectedOne.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+            expected.Statements.Add(expectedOne);
 
-            string expected = @$"BEGIN
-                                    INSERT INTO {TableName} (
-                                        MASTER_ID, ID, NAME, SAVINGS, MODIFIED_AT, MODIFIED_BY
-                                    ) 
-                                    VALUES (
-                                        SEQ.NEXT_VAL,
-                                        1,
-                                        'HANNAH',
-                                        12.1,
-                                        TO_DATE('2021-01-01T00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
-                                        'NOT LOGGED IN'
-                                    );
-
-                                    INSERT INTO {TableName} (
-                                        MASTER_ID, ID, NAME, SAVINGS, MODIFIED_AT, MODIFIED_BY
-                                    ) 
-                                    VALUES (
-                                        SEQ.NEXT_VAL,
-                                        2,
-                                        'HANNAH',
-                                        12.1,
-                                        TO_DATE('2021-01-01T00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
-                                        'NOT LOGGED IN'
-                                    );
-                                END;";
+            Insert expectedTwo = new(TableName);
+            expectedTwo.AddColumn("MASTER_ID", new SqlFunction("SEQ.NEXT_VAL"));
+            expectedTwo.AddColumn("ID", 2);
+            expectedTwo.AddColumn("NAME", "HANNAH");
+            expectedTwo.AddColumn("SAVINGS", 12.1);
+            expectedTwo.AddColumn("MODIFIED_AT", SqlFunctionEntity);
+            expectedTwo.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+            expected.Statements.Add(expectedTwo);
 
             string actualEscaped = Regex.Replace(actual, @"\s", "");
-            string expectedEscaped = Regex.Replace(expected, @"\s", "");
+            string expectedEscaped = Regex.Replace(expected.ToString(), @"\s", "");
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
 
         private Insert GetInsertWithMasterPrimaryKey(int id)
         {
-            Insert query = new Insert(TableName);
+            Insert query = new(TableName);
 
-            query.MasterPrimary = new KeyValuePair<string, string>("MASTER_ID", "SEQ.NEXT_VAL");
-
+            query.AddColumn("MASTER_ID", new SqlFunction("SEQ.NEXT_VAL"));
             query.AddColumn("ID", id);
             query.AddColumn("NAME", "HANNAH");
             query.AddColumn("SAVINGS", 12.1);
-
-            DateTime modifiedAt = DateTime.Parse("2021-01-01T00:00:00+00:00");
-            query.AddColumn("MODIFIED_AT", modifiedAt);
-
+            query.AddColumn("MODIFIED_AT", SqlFunctionEntity);
             query.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
 
             return query;
@@ -175,10 +147,7 @@ namespace QueryBuilderTest
             query.AddColumn("ID", 1);
             query.AddColumn("NAME", "HANNAH");
             query.AddColumn("SAVINGS", 12.1);
-
-            DateTime modifiedAt = DateTime.Parse("2021-01-01T00:00:00+00:00");
-            query.AddColumn("MODIFIED_AT", modifiedAt);
-
+            query.AddColumn("MODIFIED_AT", SqlFunctionEntity);
             query.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
 
             return query;
@@ -194,10 +163,7 @@ namespace QueryBuilderTest
 
             query.AddColumn("NAME", "HANNAH");
             query.AddColumn("SAVINGS", 12.1);
-
-            DateTime modifiedAt = DateTime.Parse("2021-01-01T00:00:00+00:00");
-            query.AddColumn("MODIFIED_AT", modifiedAt);
-
+            query.AddColumn("MODIFIED_AT", SqlFunctionEntity);
             query.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
 
             return query;
@@ -217,10 +183,7 @@ namespace QueryBuilderTest
 
             query.AddColumn("NAME", "HANNAH");
             query.AddColumn("SAVINGS", 12.1);
-
-            DateTime modifiedAt = DateTime.Parse("2021-01-01T00:00:00+00:00");
-            query.AddColumn("MODIFIED_AT", modifiedAt);
-
+            query.AddColumn("MODIFIED_AT", SqlFunctionEntity);
             query.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
 
             return query;
@@ -228,7 +191,7 @@ namespace QueryBuilderTest
 
         private Transaction GetTransactionWithTwoInserts()
         {
-            Transaction query = new Transaction();
+            Transaction query = new();
 
             Insert insert1 = GetInsertWithMasterPrimaryKey(1);
             Insert insert2 = GetInsertWithMasterPrimaryKey(2);
