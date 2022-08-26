@@ -21,7 +21,7 @@ namespace QueryBuilder.Statements
             Columns.Add(name, functionLiteral);
         }
 
-        protected static string ConvertJTokenToString(JToken token)
+        protected static string ConvertJTokenToString(JToken token, TimeZoneInfo timeZone)
         {
             switch (token.Type)
             {
@@ -41,11 +41,17 @@ namespace QueryBuilder.Statements
                 case JTokenType.Float:
                     string stringLiteral = token.ToString();
                     return stringLiteral.Replace(",", ".");
+
                 case JTokenType.Date:
                     DateTime datetimeValue = (DateTime)token;
-                    DateTime utcDateTime = datetimeValue.ToUniversalTime();
-                    string utcDateTimeString = utcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss");
-                    return $"TO_DATE('{utcDateTimeString}', 'YYYY-MM-DD\"T\"HH24:MI:SS')";
+                    DateTime.SpecifyKind(datetimeValue, DateTimeKind.Unspecified);
+                    TimeSpan offset = timeZone.GetUtcOffset(datetimeValue);
+                    DateTimeOffset dto = new(datetimeValue, offset);
+
+                    string date = dto.ToString("yyyy-MM-dd");
+                    string time = dto.ToString("HH:mm:ss");
+                    string dateTimeStr = $"{date}\"T\"{time}";
+                    return $"TO_DATE('{dateTimeStr}', 'YYYY-MM-DD\"T\"HH24:MI:SS')";
                 default:
                     throw new Exception($"NOT EXPECTED TYPE: {token.Type}");
             }

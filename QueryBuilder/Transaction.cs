@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using QueryBuilder.Statements;
@@ -9,19 +10,19 @@ namespace QueryBuilder
     {
         public List<IStatement> Statements { get; set; } = new();
 
-        public override string ToString()
+        public string ToString(TimeZoneInfo timeZone)
         {
             return @$"BEGIN
-                        {GetStatementLiterals()}
+                        {GetStatementLiterals(timeZone)}
                       END;";
         }
 
-        private string GetStatementLiterals()
+        private string GetStatementLiterals(TimeZoneInfo timeZone)
         {
-            StringBuilder transaction = new StringBuilder();
+            StringBuilder transaction = new();
             foreach (IStatement statement in Statements)
             {
-                string literal = statement.ToString();
+                string literal = statement.ToString(timeZone);
                 transaction.AppendLine(literal);
             }
             return transaction.ToString();

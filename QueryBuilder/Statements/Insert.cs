@@ -10,10 +10,10 @@ namespace QueryBuilder.Statements
             TableName = tableName;
         }
 
-        override public string ToString()
+        public string ToString(TimeZoneInfo timeZone)
         {
             string columns = GetColumns();
-            string values = GetValues();
+            string values = GetValues(timeZone);
 
             return @$"INSERT INTO {TableName} (
                           {columns}
@@ -44,13 +44,13 @@ namespace QueryBuilder.Statements
             columns.Length = newLength;
         }
 
-        private string GetValues()
+        private string GetValues(TimeZoneInfo timeZone)
         {
             StringBuilder columnStringBuilder = new();
 
             foreach (KeyValuePair<string, JToken> column in Columns)
             {
-                string convertedValue = ConvertJTokenToString(column.Value);
+                string convertedValue = ConvertJTokenToString(column.Value, timeZone);
                 string columnLiteral = $"{convertedValue},";
                 columnStringBuilder.AppendLine(columnLiteral);
             }

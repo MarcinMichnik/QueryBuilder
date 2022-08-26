@@ -32,8 +32,11 @@ namespace QueryBuilderTest
             BulkMerge expected = PopulateBulkMergeWithTransaction(
                 new BulkMerge(), new List<int>() { 1 });
 
-            string actualEscaped = TestHelpers.RemoveWhitespace(actual.ToString());
-            string expectedEscaped = TestHelpers.RemoveWhitespace(expected.ToString());
+            string actualStr = actual.ToString(TestHelpers.TimeZone);
+            string actualEscaped = TestHelpers.RemoveWhitespace(actualStr);
+
+            string axpectedStr = expected.ToString(TestHelpers.TimeZone);
+            string expectedEscaped = TestHelpers.RemoveWhitespace(axpectedStr);
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -50,8 +53,11 @@ namespace QueryBuilderTest
             BulkMerge expected = PopulateBulkMergeWithTransaction(
                 new BulkMerge(), new List<int>() { 1, MaxOperationSize });
 
-            string actualEscaped = TestHelpers.RemoveWhitespace(actual.ToString());
-            string expectedEscaped = TestHelpers.RemoveWhitespace(expected.ToString());
+            string actualStr = actual.ToString(TestHelpers.TimeZone);
+            string actualEscaped = TestHelpers.RemoveWhitespace(actualStr);
+
+            string axpectedStr = expected.ToString(TestHelpers.TimeZone);
+            string expectedEscaped = TestHelpers.RemoveWhitespace(axpectedStr);
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }

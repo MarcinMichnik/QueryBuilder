@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
+﻿using System.Text;
 using Newtonsoft.Json.Linq;
 using QueryBuilder.DataTypes;
 using QueryBuilder.Statements;
@@ -77,18 +72,14 @@ namespace QueryBuilder.BulkOperations
 
         private IStatement? TryGetStatement(JToken entity, IEnumerable<JToken> matches)
         {
-            IStatement? statement = null;
+            if (!matches.Any())
+                return GetInsertFrom(entity);
 
-            if (matches.Any())
-            {
-                JToken match = matches.First();
-                if (!JToken.DeepEquals(entity, match))
-                    statement = GetUpdateFrom(entity);
-            }
-            else
-                statement = GetInsertFrom(entity);
+            JToken match = matches.First();
+            if (!JToken.DeepEquals(entity, match))
+                return GetUpdateFrom(entity);
 
-            return statement;
+            return null;
         }
         private Insert GetInsertFrom(JToken token)
         {
@@ -123,12 +114,12 @@ namespace QueryBuilder.BulkOperations
             return update;
         }
 
-        public override string ToString()
+        public string ToString(TimeZoneInfo timeZone)
         {
             StringBuilder text = new();
             foreach (Transaction t in Transactions)
             {
-                string transactionStr = t.ToString();
+                string transactionStr = t.ToString(timeZone);
                 text.AppendLine(transactionStr);
             }
             return text.ToString();

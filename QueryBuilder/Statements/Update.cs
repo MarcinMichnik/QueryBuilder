@@ -23,50 +23,54 @@ namespace QueryBuilder.Statements
             WhereClauses.Add(columnName, pair);
         }
 
-        override public string ToString()
+        public string ToString(TimeZoneInfo timeZone)
         {
             if (WhereClauses.Count == 0)
-                throw new Exception("WhereClauses must not be empty!");
+            {
+                throw new Exception(
+                    "WhereClauses must not be empty or else the update will affect the entire table!");
+            }
 
-            string primaryKeyLookups = GetPrimaryKeyLookups();
-            string columns = GetColumns();
+            string primaryKeyLookups = SerializeWhereClauses(timeZone);
+            string columns = SerializeColumns(timeZone);
 
             return @$"UPDATE {TableName} SET
-                          {columns} WHERE {primaryKeyLookups};";
+                          {columns} 
+                      WHERE {primaryKeyLookups};";
         }
 
-        private string GetColumns()
+        private string SerializeColumns(TimeZoneInfo timeZone)
         {
             StringBuilder columns = new StringBuilder();
             foreach (KeyValuePair<string, JToken> column in Columns)
             {
-                string convertedValue = ConvertJTokenToString(column.Value);
+                string convertedValue = ConvertJTokenToString(column.Value, timeZone);
                 string columnLiteral = $"{column.Key} = {convertedValue},";
                 columns.AppendLine(columnLiteral);
             }
 
             // remove last comma and newline
             int newLineLength = Environment.NewLine.Length;
-            columns.Length = columns.Length - newLineLength - 1;
+            int valueToSubtract = newLineLength + 1;
+            columns.Length -= valueToSubtract;
 
             return columns.ToString();
         }
 
-        private string GetPrimaryKeyLookups()
+        private string SerializeWhereClauses(TimeZoneInfo timeZone)
         {
-            StringBuilder primaryKeyLookups = new StringBuilder();
+            StringBuilder whereClauseLiterals = new StringBuilder();
             foreach (KeyValuePair<string, KeyValuePair<string, JToken>> primaryKeyLookup in WhereClauses)
             {
                 string arithmeticSign = primaryKeyLookup.Value.Key;
-                string convertedValue = ConvertJTokenToString(primaryKeyLookup.Value.Value);
-                string primaryKeyLookupLiteral = $"{primaryKeyLookup.Key} {arithmeticSign} {convertedValue} AND ";
-                primaryKeyLookups.Append(primaryKeyLookupLiteral);
+                string convertedValue = ConvertJTokenToString(primaryKeyLookup.Value.Value, timeZone);
+                string whereClauseLiteral = $"{primaryKeyLookup.Key} {arithmeticSign} {convertedValue} AND ";
+                whereClauseLiterals.Append(whereClauseLiteral);
             }
 
-            // remove last AND
-            primaryKeyLookups.Length -= 5;
+            whereClauseLiterals.Length -= 5; // remove last " AND "
 
-            return primaryKeyLookups.ToString();
+            return whereClauseLiterals.ToString();
         }
     }
 }
