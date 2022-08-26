@@ -16,13 +16,13 @@ namespace QueryBuilder.BulkOperations
 
         public List<Transaction> Transactions { get; set; } = new();
 
-        public ushort MaxTransactionSize { get; set; }
+        private ushort MaxTransactionSize { get; } = 512;
 
         public string TableName { get; set; }
 
         public List<string> PrimaryKeyIdentifiers { get; set; }
 
-        private SqlFunction SqlFunctionLiteral { get; set; } = new SqlFunction("CURRENT_TIMESTAMP()");
+        private SqlFunction CurrentTimestampCall { get; set; } = new SqlFunction("CURRENT_TIMESTAMP()");
 
         public BulkMerge(
             JArray incomingEntities,
@@ -32,7 +32,6 @@ namespace QueryBuilder.BulkOperations
         {
             IncomingEntities = incomingEntities;
             ExistingTableState = existingTableState;
-            MaxTransactionSize = 512;
             TableName = tableName;
             PrimaryKeyIdentifiers = primaryKeyIdentifiers;
 
@@ -49,12 +48,11 @@ namespace QueryBuilder.BulkOperations
             foreach (JToken entity in IncomingEntities)
             {
                 IEnumerable<JToken> matches = FindMatches(entity);
-                JToken match;
                 IStatement? statement = null;
 
                 if (matches.Any())
                 {
-                    match = matches.First();
+                    JToken match = matches.First();
                     if (!JToken.DeepEquals(entity, match))
                         statement = GetUpdateFrom(entity);
                 }
@@ -93,11 +91,13 @@ namespace QueryBuilder.BulkOperations
 
         private Insert GetInsertFrom(JToken token)
         {
-            Insert insert = new Insert(TableName);
-            foreach (JProperty prop in token)
+            Insert insert = new(TableName);
+            foreach (JProperty prop in token.Cast<JProperty>())
+            {
                 insert.AddColumn(prop.Name, prop.Value);
+            }
 
-            insert.AddColumn("MODIFIED_AT", SqlFunctionLiteral);
+            insert.AddColumn("MODIFIED_AT", CurrentTimestampCall);
             insert.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
 
             return insert;
@@ -105,11 +105,13 @@ namespace QueryBuilder.BulkOperations
 
         private Update GetUpdateFrom(JToken token)
         {
-            Update update = new Update(TableName);
-            foreach (JProperty prop in token)
+            Update update = new(TableName);
+            foreach (JProperty prop in token.Cast<JProperty>())
+            {
                 update.AddColumn(prop.Name, prop.Value);
+            }
 
-            update.AddColumn("MODIFIED_AT", SqlFunctionLiteral);
+            update.AddColumn("MODIFIED_AT", CurrentTimestampCall);
             update.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
 
             foreach (string identifier in PrimaryKeyIdentifiers)
