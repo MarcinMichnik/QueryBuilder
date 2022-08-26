@@ -16,9 +16,9 @@ namespace QueryBuilder.BulkOperations
         private JArray ExistingTableState { get; } = new();
         public List<Transaction> Transactions { get; set; } = new();
         public ushort MaxTransactionSize { get; } = 512;
-        private string TableName { get; set; } = "";
+        private string TableName { get; set; } = "EXAMPLE_TABLE_NAME";
         private List<string> PrimaryKeyIdentifiers { get; set; } = new();
-        private SqlFunction CurrentTimestampCall { get; set; } = new SqlFunction("CURRENT_TIMESTAMP()");
+        private SqlFunction CurrentTimestampCall { get; set; } = new("CURRENT_TIMESTAMP()");
 
         public BulkMerge() { }
 
@@ -41,7 +41,8 @@ namespace QueryBuilder.BulkOperations
             StringBuilder text = new();
             foreach (Transaction t in Transactions)
             {
-                text.AppendLine(t.ToString());
+                string transactionStr = t.ToString();
+                text.AppendLine(transactionStr);
             }
             return text.ToString();
         }
@@ -54,16 +55,7 @@ namespace QueryBuilder.BulkOperations
             {
                 JToken entity = IncomingEntities[i];
                 IEnumerable<JToken> matches = FindMatches(entity);
-                IStatement? statement = null;
-
-                if (matches.Any())
-                {
-                    JToken match = matches.First();
-                    if (!JToken.DeepEquals(entity, match))
-                        statement = GetUpdateFrom(entity);
-                }
-                else
-                    statement = GetInsertFrom(entity);
+                IStatement? statement = TryGetStatement(entity, matches);
 
                 if (statement != null)
                     transaction.Statements.Add(statement);
@@ -78,6 +70,22 @@ namespace QueryBuilder.BulkOperations
             }
         }
 
+        private IStatement? TryGetStatement(JToken entity, IEnumerable<JToken> matches)
+        {
+            IStatement? statement = null;
+
+            if (matches.Any())
+            {
+                JToken match = matches.First();
+                if (!JToken.DeepEquals(entity, match))
+                    statement = GetUpdateFrom(entity);
+            }
+            else
+                statement = GetInsertFrom(entity);
+
+            return statement;
+        }
+
         private IEnumerable<JToken> FindMatches(JToken original)
         {
             IEnumerable<JToken> matches = ExistingTableState;
@@ -86,7 +94,10 @@ namespace QueryBuilder.BulkOperations
                 return new List<JToken>();
 
             foreach (string identifier in PrimaryKeyIdentifiers)
-                matches = matches.Where(x => x[identifier].ToString() == original[identifier].ToString());
+            {
+                matches = matches.Where(
+                    x => x[identifier].ToString() == original[identifier].ToString());
+            }
 
             return matches;
         }
