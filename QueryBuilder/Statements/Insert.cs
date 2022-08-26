@@ -3,9 +3,9 @@ using Newtonsoft.Json.Linq;
 
 namespace QueryBuilder.Statements
 {
-    public class Insert : Statement
+    public class Insert : Statement, IStatement
     {
-        public Insert(string tableName) : base(tableName)
+        public Insert(string tableName)
         {
             TableName = tableName;
         }
@@ -24,37 +24,40 @@ namespace QueryBuilder.Statements
 
         private string GetColumns()
         {
-            StringBuilder columns = new StringBuilder();
+            StringBuilder columnStringBuilder = new();
 
             foreach (KeyValuePair<string, JToken> column in Columns)
             {
                 string columnLiteral = $"{column.Key},";
-                columns.AppendLine(columnLiteral);
+                columnStringBuilder.AppendLine(columnLiteral);
             }
 
-            // remove last comma and newline
-            int newLineLength = Environment.NewLine.Length;
-            columns.Length = columns.Length - newLineLength - 1;
+            RemoveTrailingSigns(columnStringBuilder);
 
-            return columns.ToString();
+            return columnStringBuilder.ToString();
+        }
+
+        private static void RemoveTrailingSigns(StringBuilder columns)
+        {
+            int newLineStrLength = Environment.NewLine.Length;
+            int newLength = columns.Length - newLineStrLength - 1;
+            columns.Length = newLength;
         }
 
         private string GetValues()
         {
-            StringBuilder columns = new StringBuilder();
+            StringBuilder columnStringBuilder = new();
 
             foreach (KeyValuePair<string, JToken> column in Columns)
             {
                 string convertedValue = ConvertJTokenToString(column.Value);
                 string columnLiteral = $"{convertedValue},";
-                columns.AppendLine(columnLiteral);
+                columnStringBuilder.AppendLine(columnLiteral);
             }
 
-            // remove last comma and newline
-            int newLineLength = Environment.NewLine.Length;
-            columns.Length = columns.Length - newLineLength - 1;
+            RemoveTrailingSigns(columnStringBuilder);
 
-            return columns.ToString();
+            return columnStringBuilder.ToString();
         }
     }
 }

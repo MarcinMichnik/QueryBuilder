@@ -4,23 +4,17 @@ using QueryBuilder.DataTypes;
 
 namespace QueryBuilder.Statements
 {
-    public abstract class Statement : IStatement
+    public abstract class Statement
     {
-        public string TableName { get; set; }
-        public Dictionary<string, JToken> Columns { get; set; } = new();
-
         // used to distinguish sql function calls from regular string values
         // since both are stored as a JTokenType.String
         // sql function calls will start with this prefix
-
-        // IMPORTANT - this implementation presumes
+        // IMPORTANT: this implementation presumes
         // that "\f\n" would never be used as first characters in a function literal name
         private readonly string functionLiteralPrefix = "\f\n";
 
-        protected Statement(string tableName)
-        {
-            TableName = tableName;
-        }
+        public Dictionary<string, JToken> Columns { get; set; } = new();
+        public string TableName { get; set; } = "EXAMPLE_TABLE_NAME";
 
         public void AddColumn(string name, JToken value)
         {
@@ -55,11 +49,6 @@ namespace QueryBuilder.Statements
                 default:
                     throw new Exception("NOT EXPECTED");
             }
-        }
-
-        override public string ToString()
-        {
-            throw new Exception("NOT EXPECTED");
         }
     }
 }

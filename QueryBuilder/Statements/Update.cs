@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace QueryBuilder.Statements
 {
-    public class Update : Statement
+    public class Update : Statement, IStatement
     {
         // list of pairs where key is primaryKeyName, value is filter for updting
         public List<KeyValuePair<string, JToken>> PrimaryKeyLookups { get; set; }
