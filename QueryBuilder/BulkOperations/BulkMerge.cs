@@ -6,11 +6,18 @@ namespace QueryBuilder.BulkOperations
 {
     public class BulkMerge : AbstractBase
     {
+        // Can produce many sql transactions in case there are too many statements
         private JArray IncomingEntities { get; } = new();
         private JArray ExistingTableState { get; } = new();
         private List<Transaction> Transactions { get; set; } = new();
-        public ushort MaxTransactionSize { get; } = 512;
+        public ushort MaxTransactionSize { get; } = 2048;
         private List<string> PrimaryKeyIdentifiers { get; set; } = new();
+        private Dictionary<OperationResult, int> OperationResults { get; } = new() 
+        {
+            { OperationResult.INSERTED, 0 },
+            { OperationResult.UPDATED, 0 },
+            { OperationResult.SKIPPED, 0 }
+        };
 
         public BulkMerge() { }
 
@@ -37,6 +44,7 @@ namespace QueryBuilder.BulkOperations
                 JToken entity = IncomingEntities[i];
                 IEnumerable<JToken> matches = FindMatches(entity);
                 IStatement? statement = TryGetStatement(entity, matches);
+                CountOperationResult(statement);
 
                 if (statement != null)
                     transaction.AddStatement(statement);
@@ -46,9 +54,34 @@ namespace QueryBuilder.BulkOperations
                     Transactions.Add(transaction);
                     transaction = new Transaction();
                 }
-                if (i == IncomingEntities.Count - 1)
+
+                if (isLastLoopIteration(i))
                     Transactions.Add(transaction);
             }
+        }
+
+        private void CountOperationResult(IStatement? statement)
+        {
+            if (statement == null)
+            {
+                OperationResults[OperationResult.SKIPPED]++;
+                return;
+            }
+
+            if (statement.GetType() == typeof(Insert))
+            {
+                OperationResults[OperationResult.INSERTED]++;
+                return;
+            }
+            else { // Update
+                OperationResults[OperationResult.UPDATED]++;
+                return;
+            }
+        }
+
+        private bool isLastLoopIteration(int i)
+        {
+            return i == IncomingEntities.Count - 1;
         }
 
         public void AddTransaction(Transaction transaction)
@@ -107,6 +140,9 @@ namespace QueryBuilder.BulkOperations
             Update update = new(TableName);
             foreach (JProperty prop in token.Cast<JProperty>())
             {
+                if (PrimaryKeyIdentifiers.Contains(prop.Name))
+                    continue;
+
                 update.AddColumn(prop.Name, prop.Value);
             }
 
@@ -130,6 +166,21 @@ namespace QueryBuilder.BulkOperations
                 text.AppendLine(transactionStr);
             }
             return text.ToString();
+        }
+
+        public int GetInsertCount()
+        {
+            return OperationResults[OperationResult.INSERTED];
+        }
+
+        public int GetUpdateCount()
+        {
+            return OperationResults[OperationResult.UPDATED];
+        }
+
+        public int GetSkipCount()
+        {
+            return OperationResults[OperationResult.SKIPPED];
         }
     }
 }
