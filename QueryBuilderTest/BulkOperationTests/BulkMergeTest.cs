@@ -12,8 +12,8 @@ namespace QueryBuilderTest.BulkOperationTests
         public void TestSingleMerge()
         {
             int start = 1;
-            JArray incoming = GetArrayOfEntities(start);
-            JArray existing = GetArrayOfEntities(start + 1);
+            JArray incoming = GetExampleArrayWithNamedEntity(start, "HANNAH");
+            JArray existing = GetExampleArrayWithNamedEntity(start + 1, "HANNAH");
 
             BulkMerge actual = new(
                 incoming, existing, TableName, PrimaryKeyIdentifiers);
@@ -22,11 +22,13 @@ namespace QueryBuilderTest.BulkOperationTests
                                     INSERT INTO {TableName} (
                                         ID,
                                         NAME,
+                                        SAVINGS,
                                         MODIFIED_AT,
                                         MODIFIED_BY
                                     ) VALUES (
                                         {start},
                                         'HANNAH',
+                                        12.1,
                                         {CurrentTimestampCall.Literal},
                                         '{ModifiedBy}'
                                     );
@@ -44,8 +46,8 @@ namespace QueryBuilderTest.BulkOperationTests
         public void TestSingleMergeInsertCount()
         {
             int start = 1;
-            JArray incoming = GetArrayOfEntities(start);
-            JArray existing = GetArrayOfEntities(start + 1);
+            JArray incoming = GetExampleArrayWithNamedEntity(start, "HANNAH");
+            JArray existing = GetExampleArrayWithNamedEntity(start + 1, "HANNAH");
 
             BulkMerge actual = new(
                 incoming, existing, TableName, PrimaryKeyIdentifiers);
@@ -102,23 +104,8 @@ namespace QueryBuilderTest.BulkOperationTests
         [Test]
         public void TestMergeWithUpdates()
         {
-            JArray incoming = new();
-            JObject exampleIncoming = new()
-            {
-                ["ID"] = 1,
-                ["NAME"] = "HANNAH",
-                ["SAVINGS"] = 12.1
-            };
-            incoming.Add(exampleIncoming);
-
-            JArray existing = new();
-            JObject exampleExisting = new()
-            {
-                ["ID"] = 1,
-                ["NAME"] = "SOMEONE",
-                ["SAVINGS"] = 11.2
-            };
-            existing.Add(exampleExisting);
+            JArray incoming = GetExampleArrayWithNamedEntity(1, "HANNAH");
+            JArray existing = GetExampleArrayWithNamedEntity(1, "SOMEONE");
 
             BulkMerge actual = new(
                 incoming, existing, TableName, PrimaryKeyIdentifiers);
@@ -170,16 +157,17 @@ namespace QueryBuilderTest.BulkOperationTests
             return incoming;
         }
 
-        private static JArray GetArrayOfEntities(int id)
+        private static JArray GetExampleArrayWithNamedEntity(int id, string entityName)
         {
-            JArray array = new();
-            JObject element = new()
+            JArray existing = new();
+            JObject exampleExisting = new()
             {
                 ["ID"] = id,
-                ["NAME"] = "HANNAH"
+                ["NAME"] = entityName,
+                ["SAVINGS"] = 12.1
             };
-            array.Add(element);
-            return array;
+            existing.Add(exampleExisting);
+            return existing;
         }
     }
 }
