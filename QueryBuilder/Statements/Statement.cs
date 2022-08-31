@@ -1,12 +1,10 @@
-﻿using System;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text;
 using Newtonsoft.Json.Linq;
 using QueryBuilder.DataTypes;
 
 namespace QueryBuilder.Statements
 {
-    public abstract class Statement
+    public abstract class Statement : AbstractBase
     {
         protected Dictionary<string, JToken> Columns { get; set; } = new();
 
@@ -14,7 +12,6 @@ namespace QueryBuilder.Statements
         // value is a pair where key is an arithmetic operator sign
         // and value is used on the right side of the where clause
         protected Dictionary<string, KeyValuePair<string, JToken>> WhereClauses { get; } = new();
-        protected string TableName { get; set; } = "EXAMPLE_TABLE_NAME";
 
         public void Where(string columnName, string arithmeticSign, JToken value)
         {
@@ -73,9 +70,7 @@ namespace QueryBuilder.Statements
 
             // If JTopkeType.String has a function call prefix, it needs to be read differently
             if (strToken.StartsWith(SqlFunction.FunctionLiteralPrefix))
-            {
                 return strToken[SqlFunction.FunctionLiteralPrefix.Length..];
-            }
 
             return $"'{strToken}'";
         }

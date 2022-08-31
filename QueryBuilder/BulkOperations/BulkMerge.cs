@@ -1,19 +1,16 @@
 ﻿using System.Text;
 using Newtonsoft.Json.Linq;
-using QueryBuilder.DataTypes;
 using QueryBuilder.Statements;
 
 namespace QueryBuilder.BulkOperations
 {
-    public class BulkMerge
+    public class BulkMerge : AbstractBase
     {
         private JArray IncomingEntities { get; } = new();
         private JArray ExistingTableState { get; } = new();
         public List<Transaction> Transactions { get; set; } = new();
         public ushort MaxTransactionSize { get; } = 512;
-        private string TableName { get; set; } = "EXAMPLE_TABLE_NAME";
         private List<string> PrimaryKeyIdentifiers { get; set; } = new();
-        private SqlFunction CurrentTimestampCall { get; set; } = new("CURRENT_TIMESTAMP()");
 
         public BulkMerge() { }
 
@@ -42,9 +39,9 @@ namespace QueryBuilder.BulkOperations
                 IStatement? statement = TryGetStatement(entity, matches);
 
                 if (statement != null)
-                    transaction.Statements.Add(statement);
+                    transaction.AddStatement(statement);
 
-                if (transaction.Statements.Count % MaxTransactionSize == 0)
+                if (transaction.GetStatementCount() % MaxTransactionSize == 0)
                 {
                     Transactions.Add(transaction);
                     transaction = new Transaction();
@@ -90,7 +87,7 @@ namespace QueryBuilder.BulkOperations
             }
 
             insert.AddColumn("MODIFIED_AT", CurrentTimestampCall);
-            insert.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+            insert.AddColumn("MODIFIED_BY", ModifiedBy);
 
             return insert;
         }
@@ -104,7 +101,7 @@ namespace QueryBuilder.BulkOperations
             }
 
             update.AddColumn("MODIFIED_AT", CurrentTimestampCall);
-            update.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+            update.AddColumn("MODIFIED_BY", ModifiedBy);
 
             foreach (string identifier in PrimaryKeyIdentifiers)
             {

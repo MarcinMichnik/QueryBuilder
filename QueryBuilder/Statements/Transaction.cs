@@ -4,13 +4,23 @@ namespace QueryBuilder.Statements
 {
     public class Transaction
     {
-        public List<IStatement> Statements { get; set; } = new();
+        private List<IStatement> Statements { get; } = new();
 
         public string ToString(TimeZoneInfo timeZone)
         {
             return @$"BEGIN
                         {GetStatementLiterals(timeZone)}
                       END;";
+        }
+
+        public void AddStatement(IStatement statement)
+        { 
+            Statements.Add(statement);
+        }
+
+        public int GetStatementCount()
+        { 
+            return Statements.Count;
         }
 
         private string GetStatementLiterals(TimeZoneInfo timeZone)

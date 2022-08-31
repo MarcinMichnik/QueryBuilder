@@ -23,7 +23,7 @@ namespace QueryBuilderTest.StatementTests
                                     'HANNAH',
                                     12.1,
                                     {CurrentTimestampCall.Literal},
-                                    'NOT LOGGED IN'
+                                    '{ModifiedBy}'
                                 );";
 
             string actual = query.ToString(TimeZone);
@@ -51,7 +51,7 @@ namespace QueryBuilderTest.StatementTests
                                     12.1,
                                     TO_DATE('2022-01-01""T""00:00:00', 'YYYY-MM-DD""T""HH24:MI:SS'),
                                     {CurrentTimestampCall.Literal},
-                                    'NOT LOGGED IN'
+                                    '{ModifiedBy}'
                                 );";
 
             string actual = query.ToString(TimeZone);
@@ -70,7 +70,7 @@ namespace QueryBuilderTest.StatementTests
             query.AddColumn("SAVINGS", 12.1);
             query.AddColumn("DATE_FROM", DateTime.Parse("2022-01-01T00:00:00+01:00"));
             query.AddColumn("MODIFIED_AT", CurrentTimestampCall);
-            query.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+            query.AddColumn("MODIFIED_BY", ModifiedBy);
 
             return query;
         }

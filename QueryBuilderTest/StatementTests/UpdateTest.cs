@@ -1,5 +1,4 @@
-﻿using QueryBuilder.DataTypes;
-using QueryBuilder.Statements;
+﻿using QueryBuilder.Statements;
 
 namespace QueryBuilderTest.StatementTests
 {
@@ -14,7 +13,7 @@ namespace QueryBuilderTest.StatementTests
                                     NAME = 'HANNAH',
                                     SAVINGS = 12.1,
                                     MODIFIED_AT = {CurrentTimestampCall.Literal},
-                                    MODIFIED_BY = 'NOT LOGGED IN'
+                                    MODIFIED_BY = '{ModifiedBy}'
                                 WHERE
                                     ID = 1;";
 
@@ -34,7 +33,7 @@ namespace QueryBuilderTest.StatementTests
                                     NAME = 'HANNAH',
                                     SAVINGS = 12.1,
                                     MODIFIED_AT = {CurrentTimestampCall.Literal},
-                                    MODIFIED_BY = 'NOT LOGGED IN'
+                                    MODIFIED_BY = '{ModifiedBy}'
                                 WHERE
                                     ID = 1 
                                     AND EXTERNAL_ID = 301;";
@@ -52,23 +51,9 @@ namespace QueryBuilderTest.StatementTests
             query.AddColumn("NAME", "HANNAH");
             query.AddColumn("SAVINGS", 12.1);
             query.AddColumn("MODIFIED_AT", CurrentTimestampCall);
-            query.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+            query.AddColumn("MODIFIED_BY", ModifiedBy);
 
             query.Where("ID", "=", 1);
-
-            return query;
-        }
-
-        private Update GetUpdateWithManyPrimaryKeys()
-        {
-            Update query = new(TableName);
-            query.AddColumn("NAME", "HANNAH");
-            query.AddColumn("SAVINGS", 12.1);
-            query.AddColumn("MODIFIED_AT", CurrentTimestampCall);
-            query.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
-
-            query.Where("ID", "=", 1);
-            query.Where("EXTERNAL_ID", "=", 301);
 
             return query;
         }

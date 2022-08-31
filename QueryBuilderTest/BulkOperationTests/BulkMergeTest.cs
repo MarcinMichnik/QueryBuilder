@@ -92,7 +92,7 @@ namespace QueryBuilderTest.BulkOperationTests
                 example.AddColumn("NAME", "HANNAH");
                 example.AddColumn("MODIFIED_AT", CurrentTimestampCall);
                 example.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
-                transaction.Statements.Add(example);
+                transaction.AddStatement(example);
             }
 
             bulkMergeEntity.Transactions.Add(transaction);
