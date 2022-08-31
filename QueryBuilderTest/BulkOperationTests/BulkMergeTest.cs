@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
 using QueryBuilder.BulkOperations;
-using QueryBuilder.Statements;
 
 namespace QueryBuilderTest.BulkOperationTests
 {
@@ -113,24 +112,6 @@ namespace QueryBuilderTest.BulkOperationTests
             }
 
             return incoming;
-        }
-
-        private BulkMerge PopulateBulkMergeWithTransaction(
-            BulkMerge bulkMergeEntity, List<int> id)
-        {
-            Transaction transaction = new();
-            foreach (int i in id)
-            {
-                Insert example = new(TableName);
-                example.AddColumn("ID", i);
-                example.AddColumn("NAME", "HANNAH");
-                example.AddColumn("MODIFIED_AT", CurrentTimestampCall);
-                example.AddColumn("MODIFIED_BY", ModifiedBy);
-                transaction.AddStatement(example);
-            }
-
-            bulkMergeEntity.AddTransaction(transaction);
-            return bulkMergeEntity;
         }
 
         private static JArray GetArrayOfEntities(int id)
