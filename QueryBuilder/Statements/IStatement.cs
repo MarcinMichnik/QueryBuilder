@@ -4,7 +4,7 @@ namespace QueryBuilder.Statements
 {
     public interface IStatement
     {
-        void AddColumn(string name, JToken value);
+        // Serialize sql statement to string
         string ToString(TimeZoneInfo timeZone);
     }
 }

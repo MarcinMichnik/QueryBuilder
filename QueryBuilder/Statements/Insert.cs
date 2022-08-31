@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace QueryBuilder.Statements
 {
-    public class Insert : Statement, IStatement
+    public class Insert : ColumnStatement, IStatement
     {
         public Insert(string tableName)
         {
