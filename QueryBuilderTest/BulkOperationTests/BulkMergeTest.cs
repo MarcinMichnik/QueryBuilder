@@ -1,24 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using NUnit.Framework;
-using QueryBuilder;
+﻿using Newtonsoft.Json.Linq;
 using QueryBuilder.BulkOperations;
-using QueryBuilder.DataTypes;
 using QueryBuilder.Statements;
 
-namespace QueryBuilderTest
+namespace QueryBuilderTest.BulkOperationTests
 {
-    internal class BulkMergeTest
+    internal class BulkMergeTest : AbstractTest
     {
-        private SqlFunction CurrentTimestampCall { get; set; } = new("CURRENT_TIMESTAMP()");
-        private string TableName { get; } = "EXAMPLE_TABLE_NAME";
         private List<string> PrimaryKeyIdentifiers { get; set; } = new() { "ID" };
-        public int MaxOperationSize { get; set; } = 1000;
+        private int MaxOperationSize { get; set; } = 1000;
 
         [Test]
         public void TestSingleMerge()

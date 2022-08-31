@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-using QueryBuilder.Statements;
+﻿using System.Text;
 
-namespace QueryBuilder
+namespace QueryBuilder.Statements
 {
     public class Transaction
     {

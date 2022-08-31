@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using QueryBuilder.DataTypes;
 
@@ -7,7 +8,18 @@ namespace QueryBuilder.Statements
     public abstract class Statement
     {
         public Dictionary<string, JToken> Columns { get; set; } = new();
+
+        // Dict where key is FilteredColumnName,
+        // value is a pair where key is an arithmetic operator sign
+        // and value is used on the right side of the where clause
+        protected Dictionary<string, KeyValuePair<string, JToken>> WhereClauses { get; } = new();
         public string TableName { get; set; } = "EXAMPLE_TABLE_NAME";
+
+        public void Where(string columnName, string arithmeticSign, JToken value)
+        {
+            KeyValuePair<string, JToken> pair = new(arithmeticSign, value);
+            WhereClauses.Add(columnName, pair);
+        }
 
         public void AddColumn(string name, JToken value)
         {
@@ -55,6 +67,22 @@ namespace QueryBuilder.Statements
                 default:
                     throw new Exception($"NOT EXPECTED TYPE: {token.Type}");
             }
+        }
+
+        protected string SerializeWhereClauses(TimeZoneInfo timeZone)
+        {
+            StringBuilder whereClauseLiterals = new StringBuilder();
+            foreach (KeyValuePair<string, KeyValuePair<string, JToken>> primaryKeyLookup in WhereClauses)
+            {
+                string arithmeticSign = primaryKeyLookup.Value.Key;
+                string convertedValue = ConvertJTokenToString(primaryKeyLookup.Value.Value, timeZone);
+                string whereClauseLiteral = $"{primaryKeyLookup.Key} {arithmeticSign} {convertedValue} AND ";
+                whereClauseLiterals.Append(whereClauseLiteral);
+            }
+
+            whereClauseLiterals.Length -= 5; // remove last " AND "
+
+            return whereClauseLiterals.ToString();
         }
     }
 }
