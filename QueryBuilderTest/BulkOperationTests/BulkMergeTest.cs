@@ -12,20 +12,31 @@ namespace QueryBuilderTest.BulkOperationTests
         [Test]
         public void TestSingleMerge()
         {
-            JArray incoming = GetArrayOfEntities(1);
-            JArray existing = GetArrayOfEntities(2);
+            int start = 1;
+            JArray incoming = GetArrayOfEntities(start);
+            JArray existing = GetArrayOfEntities(start + 1);
 
             BulkMerge actual = new(
                 incoming, existing, TableName, PrimaryKeyIdentifiers);
 
-            BulkMerge expected = PopulateBulkMergeWithTransaction(
-                new BulkMerge(), new List<int>() { 1 });
+            string expected = @$"BEGIN
+                                    INSERT INTO {TableName} (
+                                        ID,
+                                        NAME,
+                                        MODIFIED_AT,
+                                        MODIFIED_BY
+                                    ) VALUES (
+                                        {start},
+                                        'HANNAH',
+                                        {CurrentTimestampCall.Literal},
+                                        '{ModifiedBy}'
+                                    );
+                                 END;";
 
             string actualStr = actual.ToString(TestHelpers.TimeZone);
             string actualEscaped = TestHelpers.RemoveWhitespace(actualStr);
 
-            string axpectedStr = expected.ToString(TestHelpers.TimeZone);
-            string expectedEscaped = TestHelpers.RemoveWhitespace(axpectedStr);
+            string expectedEscaped = TestHelpers.RemoveWhitespace(expected);
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -33,20 +44,43 @@ namespace QueryBuilderTest.BulkOperationTests
         [Test]
         public void TestBulkMerge()
         {
-            JArray incoming = GetBigArrayOfEntities(1, MaxOperationSize);
-            JArray existing = GetBigArrayOfEntities(2, MaxOperationSize - 1);
+            int start = 1;
+            JArray incoming = GetBigArrayOfEntities(start, MaxOperationSize);
+            JArray existing = GetBigArrayOfEntities(start + 1, MaxOperationSize - 1);
 
             BulkMerge actual = new(
                 incoming, existing, TableName, PrimaryKeyIdentifiers);
 
-            BulkMerge expected = PopulateBulkMergeWithTransaction(
-                new BulkMerge(), new List<int>() { 1, MaxOperationSize });
+            string expected = @$"BEGIN
+                                    INSERT INTO {TableName} (
+                                        ID,
+                                        NAME,
+                                        MODIFIED_AT,
+                                        MODIFIED_BY
+                                    ) VALUES (
+                                        {start},
+                                        'HANNAH',
+                                        {CurrentTimestampCall.Literal},
+                                        '{ModifiedBy}'
+                                    );
+
+                                    INSERT INTO {TableName} (
+                                        ID,
+                                        NAME,
+                                        MODIFIED_AT,
+                                        MODIFIED_BY
+                                    ) VALUES (
+                                        {MaxOperationSize},
+                                        'HANNAH',
+                                        {CurrentTimestampCall.Literal},
+                                        '{ModifiedBy}'
+                                    );
+                                 END;";
 
             string actualStr = actual.ToString(TestHelpers.TimeZone);
             string actualEscaped = TestHelpers.RemoveWhitespace(actualStr);
 
-            string axpectedStr = expected.ToString(TestHelpers.TimeZone);
-            string expectedEscaped = TestHelpers.RemoveWhitespace(axpectedStr);
+            string expectedEscaped = TestHelpers.RemoveWhitespace(expected);
 
             Assert.That(actualEscaped, Is.EqualTo(expectedEscaped));
         }
@@ -58,7 +92,7 @@ namespace QueryBuilderTest.BulkOperationTests
 
             BulkMerge actualEntity = new(
                 incoming, new JArray(), TableName, PrimaryKeyIdentifiers);
-            int actual = actualEntity.Transactions.Count;
+            int actual = actualEntity.GetTransactionCount();
 
             int expected = (int)Math.Ceiling(MaxOperationSize / (double)actualEntity.MaxTransactionSize);
 
@@ -91,11 +125,11 @@ namespace QueryBuilderTest.BulkOperationTests
                 example.AddColumn("ID", i);
                 example.AddColumn("NAME", "HANNAH");
                 example.AddColumn("MODIFIED_AT", CurrentTimestampCall);
-                example.AddColumn("MODIFIED_BY", "NOT LOGGED IN");
+                example.AddColumn("MODIFIED_BY", ModifiedBy);
                 transaction.AddStatement(example);
             }
 
-            bulkMergeEntity.Transactions.Add(transaction);
+            bulkMergeEntity.AddTransaction(transaction);
             return bulkMergeEntity;
         }
 

@@ -8,7 +8,7 @@ namespace QueryBuilder.BulkOperations
     {
         private JArray IncomingEntities { get; } = new();
         private JArray ExistingTableState { get; } = new();
-        public List<Transaction> Transactions { get; set; } = new();
+        private List<Transaction> Transactions { get; set; } = new();
         public ushort MaxTransactionSize { get; } = 512;
         private List<string> PrimaryKeyIdentifiers { get; set; } = new();
 
@@ -51,6 +51,16 @@ namespace QueryBuilder.BulkOperations
             }
         }
 
+        public void AddTransaction(Transaction transaction)
+        {
+            Transactions.Add(transaction);
+        }
+
+        public int GetTransactionCount()
+        { 
+            return Transactions.Count;
+        }
+
         private IEnumerable<JToken> FindMatches(JToken original)
         {
             IEnumerable<JToken> matches = ExistingTableState;
@@ -70,15 +80,15 @@ namespace QueryBuilder.BulkOperations
         private IStatement? TryGetStatement(JToken entity, IEnumerable<JToken> matches)
         {
             if (!matches.Any())
-                return GetInsertFrom(entity);
+                return GetInsertFromToken(entity);
 
             JToken match = matches.First();
             if (!JToken.DeepEquals(entity, match))
-                return GetUpdateFrom(entity);
+                return GetUpdateFromToken(entity);
 
             return null;
         }
-        private Insert GetInsertFrom(JToken token)
+        private Insert GetInsertFromToken(JToken token)
         {
             Insert insert = new(TableName);
             foreach (JProperty prop in token.Cast<JProperty>())
@@ -92,7 +102,7 @@ namespace QueryBuilder.BulkOperations
             return insert;
         }
 
-        private Update GetUpdateFrom(JToken token)
+        private Update GetUpdateFromToken(JToken token)
         {
             Update update = new(TableName);
             foreach (JProperty prop in token.Cast<JProperty>())
