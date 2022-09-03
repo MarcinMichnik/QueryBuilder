@@ -1,10 +1,11 @@
 ﻿namespace QueryBuilder.Statements
 {
-    public class Delete : FilterableStatement, IStatement
+    public class Delete : Statement, IStatement
     {
         public Delete(string tableName)
         {
             TableName = tableName;
+            WhereClauses = new();
         }
 
         public string ToString(TimeZoneInfo timeZone)

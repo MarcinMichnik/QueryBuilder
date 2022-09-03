@@ -3,11 +3,12 @@ using Newtonsoft.Json.Linq;
 
 namespace QueryBuilder.Statements
 {
-    public class Insert : ColumnStatement, IStatement
+    public class Insert : Statement, IStatement
     {
         public Insert(string tableName)
         {
             TableName = tableName;
+            Columns = new();
         }
 
         public string ToString(TimeZoneInfo timeZone)

@@ -4,25 +4,14 @@ using QueryBuilder.DataTypes;
 
 namespace QueryBuilder.Statements
 {
-    public class Update : FilterableStatement, IStatement
+    public class Update : Statement, IStatement
     {
-        protected Dictionary<string, JToken> Columns { get; set; } = new();
 
         public Update(string tableName)
         {
             TableName = tableName;
-        }
-
-        public void AddColumn(string name, JToken value)
-        {
-            Columns.Add(name, value);
-        }
-
-        public void AddColumn(string name, SqlFunction function)
-        {
-            // Save function as JTokenType.String with a prefix
-            string functionLiteral = function.GetPrefixedLiteral();
-            Columns.Add(name, functionLiteral);
+            WhereClauses = new();
+            Columns = new();
         }
 
         public string ToString(TimeZoneInfo timeZone)
