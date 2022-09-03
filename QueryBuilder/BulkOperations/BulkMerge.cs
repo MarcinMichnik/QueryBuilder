@@ -19,8 +19,6 @@ namespace QueryBuilder.BulkOperations
             { OperationResult.SKIPPED, 0 }
         };
 
-        public BulkMerge() { }
-
         public BulkMerge(
             JArray incomingEntities,
             JArray existingTableState,
