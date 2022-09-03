@@ -1,12 +1,10 @@
 ﻿using System.Text;
 using Newtonsoft.Json.Linq;
-using QueryBuilder.DataTypes;
 
 namespace QueryBuilder.Statements
 {
     public class Update : Statement, IStatement
-    {
-
+    { 
         public Update(string tableName)
         {
             TableName = tableName;
@@ -16,6 +14,7 @@ namespace QueryBuilder.Statements
 
         public string ToString(TimeZoneInfo timeZone)
         {
+            // This can throw exceptions and it's fine
             if (WhereClauses.Count == 0)
             {
                 throw new Exception(
