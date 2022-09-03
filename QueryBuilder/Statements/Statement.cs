@@ -17,16 +17,9 @@ namespace QueryBuilder.Statements
 
         public void AddColumn(string name, JToken value)
         {
-            try
-            {
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
                 Columns.Add(name, value);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
-            }
-            catch
-            {
-                throw new Exception("mesg");
-            }
         }
 
         public void AddColumn(string name, SqlFunction function)
