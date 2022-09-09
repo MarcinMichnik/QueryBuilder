@@ -32,6 +32,9 @@ namespace QueryBuilder.Statements
         private string SerializeColumns(TimeZoneInfo timeZone)
         {
             StringBuilder columns = new StringBuilder();
+
+            // It's ok to have a null exception.
+            // This is already handled in constructor
             foreach (KeyValuePair<string, JToken> column in Columns)
             {
                 string convertedValue = ConvertJTokenToString(column.Value, timeZone);

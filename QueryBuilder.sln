@@ -3,13 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryBuilder", "QueryBuilder\QueryBuilder.csproj", "{5FB93D13-EDEA-4B90-A98D-AC4F209D0D09}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QueryBuilder", "QueryBuilder\QueryBuilder.csproj", "{5FB93D13-EDEA-4B90-A98D-AC4F209D0D09}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryBuilderTest", "QueryBuilderTest\QueryBuilderTest.csproj", "{7D732E37-373D-4CC0-8A3C-70D535106729}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QueryBuilderTest", "QueryBuilderTest\QueryBuilderTest.csproj", "{7D732E37-373D-4CC0-8A3C-70D535106729}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{584CBB6A-0B85-4A46-A37B-BDE3344BBA51}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global
