@@ -19,7 +19,7 @@ namespace QueryBuilder.Statements
         public void AddColumn(string name, JToken value)
         {
             if (Columns == null)
-                throw new Exception(nameof(Columns));
+                throw new Exception("Cannot add column because Columns property is null!");
 
             Columns.Add(name, value);
         }
@@ -27,7 +27,7 @@ namespace QueryBuilder.Statements
         public void AddColumn(string name, SqlFunction function)
         {
             if (Columns == null)
-                throw new Exception(nameof(Columns));
+                throw new Exception("Cannot add column because Columns property is null!");
 
             // Save function as JTokenType.String with a prefix
             string functionLiteral = function.GetPrefixedLiteral();
@@ -37,7 +37,7 @@ namespace QueryBuilder.Statements
         public void Where(string columnName, string arithmeticSign, JToken value)
         {
             if (WhereClauses == null)
-                throw new Exception(nameof(WhereClauses));
+                throw new Exception("Cannot add column because WhereClauses property is null!");
 
             KeyValuePair<string, JToken> pair = new(arithmeticSign, value);
             WhereClauses.Add(columnName, pair);

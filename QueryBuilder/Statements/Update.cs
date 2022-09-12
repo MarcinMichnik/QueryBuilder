@@ -14,11 +14,11 @@ namespace QueryBuilder.Statements
 
         public string ToString(TimeZoneInfo timeZone)
         {
-            // This can throw exceptions and it's fine
-            if (WhereClauses.Count == 0)
+            if (WhereClauses is null || WhereClauses.Count == 0)
             {
-                throw new Exception(
-                    "WhereClauses must not be empty or else the update will affect the entire table!");
+                string errorMessage = 
+                    "Cannot serialize update object to string because WhereClauses property is null or contains zero elements!";
+                throw new Exception(errorMessage);
             }
 
             string primaryKeyLookups = SerializeWhereClauses(timeZone);
@@ -31,13 +31,16 @@ namespace QueryBuilder.Statements
 
         private string SerializeColumns(TimeZoneInfo timeZone)
         {
-            StringBuilder columns = new StringBuilder();
+            if (Columns is null)
+                throw new Exception("Cannot serialize update columns because Columns property is null!");
+
+            StringBuilder columns = new();
 
             // It's ok to have a null exception.
             // This is already handled in constructor
             foreach (KeyValuePair<string, JToken> column in Columns)
             {
-                string convertedValue = ConvertJTokenToString(column.Value, timeZone);
+                string convertedValue = QueryBuilderTools.ConvertJTokenToString(column.Value, timeZone);
                 string columnLiteral = $"{column.Key} = {convertedValue},";
                 columns.AppendLine(columnLiteral);
             }

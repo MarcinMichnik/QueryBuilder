@@ -24,8 +24,8 @@ namespace QueryBuilder.Statements
 
         public string ToString(TimeZoneInfo timeZone)
         {
-            string columns = GetColumns();
-            string values = GetValues(timeZone);
+            string columns = SerializeColumns();
+            string values = SerializeValues(timeZone);
 
             return @$"INSERT INTO {tableName} (
                           {columns}
@@ -34,8 +34,11 @@ namespace QueryBuilder.Statements
                       );";
         }
 
-        private string GetColumns()
+        private string SerializeColumns()
         {
+            if (Columns == null)
+                throw new Exception("Cannot get update columns because Columns property is null!");
+
             StringBuilder columnStringBuilder = new();
 
             foreach (KeyValuePair<string, JToken> column in Columns)
@@ -56,13 +59,16 @@ namespace QueryBuilder.Statements
             columns.Length = newLength;
         }
 
-        private string GetValues(TimeZoneInfo timeZone)
+        private string SerializeValues(TimeZoneInfo timeZone)
         {
+            if (Columns == null)
+                throw new Exception("Cannot get update values because Columns property is null!");
+
             StringBuilder columnStringBuilder = new();
 
             foreach (KeyValuePair<string, JToken> column in Columns)
             {
-                string convertedValue = ConvertJTokenToString(column.Value, timeZone);
+                string convertedValue = QueryBuilderTools.ConvertJTokenToString(column.Value, timeZone);
                 string columnLiteral = $"{convertedValue},";
                 columnStringBuilder.AppendLine(columnLiteral);
             }
