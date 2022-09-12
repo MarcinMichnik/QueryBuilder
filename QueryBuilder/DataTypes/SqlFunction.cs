@@ -1,6 +1,6 @@
 ﻿namespace QueryBuilder.DataTypes
 {
-    public class SqlFunction
+    public sealed class SqlFunction
     {
         // used to distinguish sql function calls from regular string values
         // since both are stored as a JTokenType.String

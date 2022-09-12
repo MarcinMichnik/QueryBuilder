@@ -4,20 +4,21 @@ using QueryBuilder.Statements;
 
 namespace QueryBuilder.BulkOperations
 {
-    public class BulkMerge : AbstractBase
+    // Can produce many sql transactions in case there are too many statements
+    public sealed class BulkMerge : AbstractBase
     {
-        // Can produce many sql transactions in case there are too many statements
-        private JArray IncomingEntities { get; } = new();
-        private JArray ExistingTableState { get; } = new();
-        private List<Transaction> Transactions { get; set; } = new();
-        public ushort MaxTransactionSize { get; } = 2048;
-        private List<string> PrimaryKeyIdentifiers { get; set; } = new();
-        private Dictionary<OperationResult, int> OperationResults { get; } = new() 
+        private readonly JArray incomingEntities;
+        private readonly JArray existingTableState;
+        private readonly List<string> primaryKeyIdentifiers;
+
+        private readonly List<Transaction> transactions = new();
+        private readonly Dictionary<OperationResult, int> operationResults = new() 
         {
             { OperationResult.INSERTED, 0 },
             { OperationResult.UPDATED, 0 },
             { OperationResult.SKIPPED, 0 }
         };
+        public ushort MaxTransactionSize { get; } = 2048;
 
         public BulkMerge(
             JArray incomingEntities,
@@ -25,10 +26,10 @@ namespace QueryBuilder.BulkOperations
             string tableName,
             List<string> primaryKeyIdentifiers)
         {
-            IncomingEntities = incomingEntities;
-            ExistingTableState = existingTableState;
             TableName = tableName;
-            PrimaryKeyIdentifiers = primaryKeyIdentifiers;
+            this.incomingEntities = incomingEntities;
+            this.existingTableState = existingTableState;
+            this.primaryKeyIdentifiers = primaryKeyIdentifiers;
 
             InitializeTransactions();
         }
@@ -37,9 +38,9 @@ namespace QueryBuilder.BulkOperations
         {
             Transaction transaction = new();
 
-            for (int i = 0; i < IncomingEntities.Count; i++)
+            for (int i = 0; i < incomingEntities.Count; i++)
             {
-                JToken entity = IncomingEntities[i];
+                JToken entity = incomingEntities[i];
                 IEnumerable<JToken> matches = FindMatches(entity);
                 IStatement? statement = TryGetStatement(entity, matches);
                 CountOperationResult(statement);
@@ -49,12 +50,12 @@ namespace QueryBuilder.BulkOperations
 
                 if (transaction.GetStatementCount() % MaxTransactionSize == 0)
                 {
-                    Transactions.Add(transaction);
+                    transactions.Add(transaction);
                     transaction = new Transaction();
                 }
 
-                if (isLastLoopIteration(i))
-                    Transactions.Add(transaction);
+                if (IsLastLoopIteration(i))
+                    transactions.Add(transaction);
             }
         }
 
@@ -62,44 +63,44 @@ namespace QueryBuilder.BulkOperations
         {
             if (statement == null)
             {
-                OperationResults[OperationResult.SKIPPED]++;
+                operationResults[OperationResult.SKIPPED]++;
                 return;
             }
 
             if (statement.GetType() == typeof(Insert))
             {
-                OperationResults[OperationResult.INSERTED]++;
+                operationResults[OperationResult.INSERTED]++;
                 return;
             }
             else { // Update
-                OperationResults[OperationResult.UPDATED]++;
+                operationResults[OperationResult.UPDATED]++;
                 return;
             }
         }
 
-        private bool isLastLoopIteration(int i)
+        private bool IsLastLoopIteration(int i)
         {
-            return i == IncomingEntities.Count - 1;
+            return i == incomingEntities.Count - 1;
         }
 
         public void AddTransaction(Transaction transaction)
         {
-            Transactions.Add(transaction);
+            transactions.Add(transaction);
         }
 
         public int GetTransactionCount()
         { 
-            return Transactions.Count;
+            return transactions.Count;
         }
 
         private IEnumerable<JToken> FindMatches(JToken original)
         {
-            IEnumerable<JToken> matches = ExistingTableState;
+            IEnumerable<JToken> matches = existingTableState;
 
-            if (PrimaryKeyIdentifiers.Count == 0)
+            if (primaryKeyIdentifiers.Count == 0)
                 return new List<JToken>();
 
-            foreach (string identifier in PrimaryKeyIdentifiers)
+            foreach (string identifier in primaryKeyIdentifiers)
             {
                 matches = matches.Where(
                     x => x[identifier].ToString() == original[identifier].ToString());
@@ -138,7 +139,7 @@ namespace QueryBuilder.BulkOperations
             Update update = new(TableName);
             foreach (JProperty prop in token.Cast<JProperty>())
             {
-                if (PrimaryKeyIdentifiers.Contains(prop.Name))
+                if (primaryKeyIdentifiers.Contains(prop.Name))
                     continue;
 
                 update.AddColumn(prop.Name, prop.Value);
@@ -147,7 +148,7 @@ namespace QueryBuilder.BulkOperations
             update.AddColumn("MODIFIED_AT", CurrentTimestampCall);
             update.AddColumn("MODIFIED_BY", ModifiedBy);
 
-            foreach (string identifier in PrimaryKeyIdentifiers)
+            foreach (string identifier in primaryKeyIdentifiers)
             {
                 update.Where(identifier, "=", token[identifier]);
             }
@@ -158,7 +159,7 @@ namespace QueryBuilder.BulkOperations
         public string ToString(TimeZoneInfo timeZone)
         {
             StringBuilder text = new();
-            foreach (Transaction t in Transactions)
+            foreach (Transaction t in transactions)
             {
                 string transactionStr = t.ToString(timeZone);
                 text.AppendLine(transactionStr);
@@ -168,17 +169,17 @@ namespace QueryBuilder.BulkOperations
 
         public int GetInsertCount()
         {
-            return OperationResults[OperationResult.INSERTED];
+            return operationResults[OperationResult.INSERTED];
         }
 
         public int GetUpdateCount()
         {
-            return OperationResults[OperationResult.UPDATED];
+            return operationResults[OperationResult.UPDATED];
         }
 
         public int GetSkipCount()
         {
-            return OperationResults[OperationResult.SKIPPED];
+            return operationResults[OperationResult.SKIPPED];
         }
     }
 }

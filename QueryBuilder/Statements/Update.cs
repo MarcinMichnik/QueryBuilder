@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace QueryBuilder.Statements
 {
-    public class Update : Statement, IStatement
+    public sealed class Update : Statement, IStatement
     { 
         public Update(string tableName)
         {

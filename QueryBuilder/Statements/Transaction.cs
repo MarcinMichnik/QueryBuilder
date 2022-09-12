@@ -2,7 +2,7 @@
 
 namespace QueryBuilder.Statements
 {
-    public class Transaction
+    public sealed class Transaction
     {
         private List<IStatement> Statements { get; } = new();
 

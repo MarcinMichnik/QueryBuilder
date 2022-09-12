@@ -1,6 +1,6 @@
 ﻿namespace QueryBuilder.Statements
 {
-    public class Delete : Statement, IStatement
+    public sealed class Delete : Statement, IStatement
     {
         public Delete(string tableName)
         {
