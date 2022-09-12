@@ -18,7 +18,7 @@ namespace QueryBuilder.Statements
 
         public void AddColumn(string name, JToken value)
         {
-            if (Columns == null)
+            if (Columns is null)
                 throw new Exception("Cannot add column because Columns property is null!");
 
             Columns.Add(name, value);
@@ -26,7 +26,7 @@ namespace QueryBuilder.Statements
 
         public void AddColumn(string name, SqlFunction function)
         {
-            if (Columns == null)
+            if (Columns is null)
                 throw new Exception("Cannot add column because Columns property is null!");
 
             // Save function as JTokenType.String with a prefix
@@ -36,8 +36,8 @@ namespace QueryBuilder.Statements
 
         public void Where(string columnName, string arithmeticSign, JToken value)
         {
-            if (WhereClauses == null)
-                throw new Exception("Cannot add column because WhereClauses property is null!");
+            if (WhereClauses is null)
+                throw new Exception("Cannot add where clause because WhereClauses property is null!");
 
             KeyValuePair<string, JToken> pair = new(arithmeticSign, value);
             WhereClauses.Add(columnName, pair);
@@ -51,6 +51,16 @@ namespace QueryBuilder.Statements
             StringBuilder whereClauseLiterals = new();
             whereClauseLiterals.Append("WHERE ");
 
+            AppendWhereClauseLiterals(timeZone, whereClauseLiterals);
+
+            return whereClauseLiterals.ToString();
+        }
+
+        private void AppendWhereClauseLiterals(TimeZoneInfo timeZone, StringBuilder whereClauseLiterals)
+        {
+            if (WhereClauses is null)
+                throw new Exception("Cannot serialize where clause to string because WhereClauses property is null!");
+
             foreach (KeyValuePair<string, KeyValuePair<string, JToken>> primaryKeyLookup in WhereClauses)
             {
                 string arithmeticSign = primaryKeyLookup.Value.Key;
@@ -60,8 +70,6 @@ namespace QueryBuilder.Statements
             }
 
             whereClauseLiterals.Length -= 5; // remove last " AND "
-
-            return whereClauseLiterals.ToString();
         }
     }
 }
