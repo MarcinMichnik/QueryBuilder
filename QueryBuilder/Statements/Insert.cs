@@ -7,8 +7,19 @@ namespace QueryBuilder.Statements
     {
         public Insert(string tableName)
         {
-            TableName = tableName;
+            this.tableName = tableName;
             Columns = new();
+        }
+
+        public Insert(string tableName, JToken token)
+        {
+            this.tableName = tableName;
+            Columns = new();
+            JObject tokenObject = (JObject)token;
+            foreach (JProperty prop in tokenObject.Properties())
+            {
+                AddColumn(prop.Name, prop.Value);
+            }
         }
 
         public string ToString(TimeZoneInfo timeZone)
@@ -16,7 +27,7 @@ namespace QueryBuilder.Statements
             string columns = GetColumns();
             string values = GetValues(timeZone);
 
-            return @$"INSERT INTO {TableName} (
+            return @$"INSERT INTO {tableName} (
                           {columns}
                       ) VALUES (
                           {values}

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections;
+using System.Text;
 using Newtonsoft.Json.Linq;
 using QueryBuilder.Statements;
 
@@ -26,7 +27,7 @@ namespace QueryBuilder.BulkOperations
             string tableName,
             List<string> primaryKeyIdentifiers)
         {
-            TableName = tableName;
+            this.tableName = tableName;
             this.incomingEntities = incomingEntities;
             this.existingTableState = existingTableState;
             this.primaryKeyIdentifiers = primaryKeyIdentifiers;
@@ -43,7 +44,7 @@ namespace QueryBuilder.BulkOperations
                 JToken entity = incomingEntities[i];
                 IEnumerable<JToken> matches = FindMatches(entity);
                 IStatement? statement = TryGetStatement(entity, matches);
-                CountOperationResult(statement);
+                AddUpOperationResult(statement);
 
                 if (statement != null)
                     transaction.AddStatement(statement);
@@ -59,7 +60,7 @@ namespace QueryBuilder.BulkOperations
             }
         }
 
-        private void CountOperationResult(IStatement? statement)
+        private void AddUpOperationResult(IStatement? statement)
         {
             if (statement == null)
             {
@@ -98,7 +99,7 @@ namespace QueryBuilder.BulkOperations
             IEnumerable<JToken> matches = existingTableState;
 
             if (primaryKeyIdentifiers.Count == 0)
-                return new List<JToken>();
+                return Enumerable.Empty<JToken>();
 
             foreach (string identifier in primaryKeyIdentifiers)
             {
@@ -112,21 +113,17 @@ namespace QueryBuilder.BulkOperations
         private IStatement? TryGetStatement(JToken entity, IEnumerable<JToken> matches)
         {
             if (!matches.Any())
-                return GetInsertFromToken(entity);
+                return CreateInsertStatement(entity);
 
             JToken match = matches.First();
             if (!JToken.DeepEquals(entity, match))
-                return GetUpdateFromToken(entity);
+                return CreateUpdateStatement(entity);
 
             return null;
         }
-        private Insert GetInsertFromToken(JToken token)
+        private Insert CreateInsertStatement(JToken token)
         {
-            Insert insert = new(TableName);
-            foreach (JProperty prop in token.Cast<JProperty>())
-            {
-                insert.AddColumn(prop.Name, prop.Value);
-            }
+            Insert insert = new(tableName, token);
 
             insert.AddColumn("MODIFIED_AT", CurrentTimestampCall);
             insert.AddColumn("MODIFIED_BY", ModifiedBy);
@@ -134,15 +131,14 @@ namespace QueryBuilder.BulkOperations
             return insert;
         }
 
-        private Update GetUpdateFromToken(JToken token)
+        private Update CreateUpdateStatement(JToken token)
         {
-            Update update = new(TableName);
-            foreach (JProperty prop in token.Cast<JProperty>())
+            Update update = new(tableName);
+            JObject tokenObject = (JObject)token;
+            foreach (JProperty prop in tokenObject.Properties())
             {
-                if (primaryKeyIdentifiers.Contains(prop.Name))
-                    continue;
-
-                update.AddColumn(prop.Name, prop.Value);
+                if (IsNotPrimaryKey(prop.Name))
+                    update.AddColumn(prop.Name, prop.Value);
             }
 
             update.AddColumn("MODIFIED_AT", CurrentTimestampCall);
@@ -154,6 +150,11 @@ namespace QueryBuilder.BulkOperations
             }
 
             return update;
+        }
+
+        private bool IsNotPrimaryKey(string columnName)
+        {
+            return !primaryKeyIdentifiers.Contains(columnName);
         }
 
         public string ToString(TimeZoneInfo timeZone)

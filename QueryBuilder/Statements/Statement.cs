@@ -10,41 +10,43 @@ namespace QueryBuilder.Statements
         // value is a pair where key is an arithmetic operator sign
         // and value is used on the right side of the where clause
 
-        // By default where clauses are not available
+        // By default where clauses are not available; To be created in constructor
         protected Dictionary<string, KeyValuePair<string, JToken>>? WhereClauses { get; set; } = null;
 
+        // By default column list is not available; To be created in constructor
         protected Dictionary<string, JToken>? Columns { get; set; } = null;
 
         public void AddColumn(string name, JToken value)
         {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                Columns.Add(name, value);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            if (Columns == null)
+                throw new Exception(nameof(Columns));
+
+            Columns.Add(name, value);
         }
 
         public void AddColumn(string name, SqlFunction function)
         {
+            if (Columns == null)
+                throw new Exception(nameof(Columns));
+
             // Save function as JTokenType.String with a prefix
             string functionLiteral = function.GetPrefixedLiteral();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             Columns.Add(name, functionLiteral);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
         }
 
         public void Where(string columnName, string arithmeticSign, JToken value)
         {
+            if (WhereClauses == null)
+                throw new Exception(nameof(WhereClauses));
+
             KeyValuePair<string, JToken> pair = new(arithmeticSign, value);
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             WhereClauses.Add(columnName, pair);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
         }
 
         protected string SerializeWhereClauses(TimeZoneInfo timeZone)
         {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-            if (WhereClauses.Count == 0)
-                return "";
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            if (WhereClauses is null || WhereClauses.Count == 0)
+                return string.Empty;
 
             StringBuilder whereClauseLiterals = new();
             whereClauseLiterals.Append("WHERE ");
@@ -52,7 +54,7 @@ namespace QueryBuilder.Statements
             foreach (KeyValuePair<string, KeyValuePair<string, JToken>> primaryKeyLookup in WhereClauses)
             {
                 string arithmeticSign = primaryKeyLookup.Value.Key;
-                string convertedValue = ConvertJTokenToString(primaryKeyLookup.Value.Value, timeZone);
+                string convertedValue = QueryBuilderTools.ConvertJTokenToString(primaryKeyLookup.Value.Value, timeZone);
                 string whereClauseLiteral = $"{primaryKeyLookup.Key} {arithmeticSign} {convertedValue} AND ";
                 whereClauseLiterals.Append(whereClauseLiteral);
             }

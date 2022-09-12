@@ -4,7 +4,7 @@
     {
         public Delete(string tableName)
         {
-            TableName = tableName;
+            this.tableName = tableName;
             WhereClauses = new();
         }
 
@@ -12,7 +12,7 @@
         {
             string whereClauseLiterals = SerializeWhereClauses(timeZone);
 
-            return @$"DELETE FROM {TableName} 
+            return @$"DELETE FROM {tableName} 
                       {whereClauseLiterals};";
         }
     }

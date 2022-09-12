@@ -7,7 +7,7 @@ namespace QueryBuilder.Statements
     { 
         public Update(string tableName)
         {
-            TableName = tableName;
+            this.tableName = tableName;
             WhereClauses = new();
             Columns = new();
         }
@@ -24,7 +24,7 @@ namespace QueryBuilder.Statements
             string primaryKeyLookups = SerializeWhereClauses(timeZone);
             string columns = SerializeColumns(timeZone);
 
-            return @$"UPDATE {TableName} SET
+            return @$"UPDATE {tableName} SET
                           {columns} 
                       {primaryKeyLookups};";
         }
